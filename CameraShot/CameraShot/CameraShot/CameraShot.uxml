@@ -1,0 +1,5 @@
+<engine:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:engine="UnityEngine.UIElements" xmlns:editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/Editor/CameraShot.uss?fileID=7433441132597879392&amp;guid=1917f10b88c95b44eb47bd1725f172ab&amp;type=3#CameraShot" />
+    <engine:Button text="Button" name="one" style="width: 50px; height: 20px;" />
+    <engine:Button text="Button" name="two" style="width: 50px; height: 20px; position: absolute; right: 0; top: 0; left: 50px; bottom: 0;" />
+</engine:UXML>
