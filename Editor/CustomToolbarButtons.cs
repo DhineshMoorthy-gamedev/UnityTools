@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
@@ -13,7 +13,9 @@ namespace Dhinesh.EditorTools.CustomTaskbar
         {
             ToolbarExtender.LeftToolbarGUI.Add(DrawTestButton);
             ToolbarExtender.RightToolbarGUI.Add(DrawReloadButton);
+            ToolbarExtender.RightToolbarGUI.Add(DrawFindSceneButton);
         }
+
 
         static void DrawTestButton()
         {
@@ -121,7 +123,34 @@ namespace Dhinesh.EditorTools.CustomTaskbar
                 menu.ShowAsContext();
             }
         }
+
+        static void DrawFindSceneButton()
+        {
+            if (GUILayout.Button(
+                new GUIContent("🔍", "Find active scene in Project"),
+                EditorStyles.toolbarButton,
+                GUILayout.Width(28)))
+            {
+                var activeScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
+
+                if (string.IsNullOrEmpty(activeScene.path))
+                {
+                    Debug.LogWarning("Active scene has no asset path.");
+                    return;
+                }
+
+                var sceneAsset = AssetDatabase.LoadAssetAtPath<SceneAsset>(activeScene.path);
+                if (sceneAsset != null)
+                {
+                    Selection.activeObject = sceneAsset;
+                    EditorGUIUtility.PingObject(sceneAsset);
+                }
+            }
+        }
+
     }
+
+
 
     /// <summary>
     /// Safe toolbar extender (null-protected)
