@@ -11,9 +11,38 @@ namespace Dhinesh.EditorTools.CustomTaskbar
     {
         static CustomToolbarButtons()
         {
+
+            ToolbarExtender.LeftToolbarGUI.Add(DrawSelectionBackButton);
+            ToolbarExtender.LeftToolbarGUI.Add(DrawSelectionForwardButton);
+
             ToolbarExtender.LeftToolbarGUI.Add(DrawTestButton);
             ToolbarExtender.RightToolbarGUI.Add(DrawReloadButton);
             ToolbarExtender.RightToolbarGUI.Add(DrawFindSceneButton);
+        }
+        static void DrawSelectionBackButton()
+        {
+            GUI.enabled = SelectionHistoryManager.CanGoBack;
+            if (GUILayout.Button(
+                new GUIContent("◀", "Previous Selection"),
+                EditorStyles.toolbarButton,
+                GUILayout.Width(28)))
+            {
+                SelectionHistoryManager.GoBack();
+            }
+            GUI.enabled = true;
+        }
+
+        static void DrawSelectionForwardButton()
+        {
+            GUI.enabled = SelectionHistoryManager.CanGoForward;
+            if (GUILayout.Button(
+                new GUIContent("▶", "Next Selection"),
+                EditorStyles.toolbarButton,
+                GUILayout.Width(28)))
+            {
+                SelectionHistoryManager.GoForward();
+            }
+            GUI.enabled = true;
         }
 
 
