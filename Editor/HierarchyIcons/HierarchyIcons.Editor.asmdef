@@ -1,0 +1,17 @@
+{
+    "name": "HierarchyIcons.Editor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:ddb487726d2e14440af1aac0d6b8a4bd",
+        "GUID:be24a089d4ffa3f43b8cdeb5dd09ff2a"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
