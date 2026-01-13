@@ -43,7 +43,7 @@ namespace HiddenDeps
         }
 
 
-        [MenuItem("Tools/Hidden Dependency Detector")]
+        [MenuItem("Tools/GameDevTools/Hidden Dependency Detector")]
         public static void Open()
         {
             GetWindow<HiddenDependencyDetectorWindow>("Hidden Dependencies");
