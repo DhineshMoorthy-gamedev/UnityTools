@@ -11,10 +11,12 @@ namespace Dhinesh.EditorTools.CustomTaskbar
     {
         static CustomToolbarButtons()
         {
-
             ToolbarExtender.LeftToolbarGUI.Add(DrawSelectionBackButton);
             ToolbarExtender.LeftToolbarGUI.Add(DrawSelectionForwardButton);
-
+            ToolbarExtender.LeftToolbarGUI.Add(() => GUILayout.Space(10));
+            ToolbarExtender.LeftToolbarGUI.Add(DrawProjectSettingsButton);
+            ToolbarExtender.LeftToolbarGUI.Add(() => GUILayout.Space(10));
+            ToolbarExtender.LeftToolbarGUI.Add(DrawPrefsButton);
             ToolbarExtender.LeftToolbarGUI.Add(DrawTestButton);
             ToolbarExtender.RightToolbarGUI.Add(DrawReloadButton);
             ToolbarExtender.RightToolbarGUI.Add(DrawFindSceneButton);
@@ -45,6 +47,27 @@ namespace Dhinesh.EditorTools.CustomTaskbar
             GUI.enabled = true;
         }
 
+        static void DrawProjectSettingsButton()
+        {
+            if (GUILayout.Button(
+                new GUIContent("⚙", "Open Project Settings"),
+                EditorStyles.toolbarButton,
+                GUILayout.Width(28)))
+            {
+                SettingsService.OpenProjectSettings("");
+            }
+        }
+
+        static void DrawPrefsButton()
+        {
+            if (GUILayout.Button(
+                new GUIContent("⚙", "Open Preferences"),
+                EditorStyles.toolbarButton,
+                GUILayout.Width(28)))
+            {
+                SettingsService.OpenUserPreferences("");
+            }
+        }
 
         static void DrawTestButton()
         {
