@@ -70,6 +70,13 @@ namespace UnityProductivityTools
                 "Tools/GameDevTools/Task Manager"
             );
 
+            // 7. Object Grouper
+            DrawToolItem(
+                "Object Grouper",
+                "Organize objects into logical groups without modifying the Hierarchy. Supports bulk visibility, locking, and selection.",
+                "Tools/GameDevTools/Object Grouper"
+            );
+
             EditorGUILayout.EndScrollView();
             
             // Footer

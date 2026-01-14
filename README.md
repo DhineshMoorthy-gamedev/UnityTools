@@ -37,6 +37,12 @@ Enhanced toolbar with quick access to common operations:
     - **Features**: Priority levels (color-coded), status tracking, and owner assignment.
     - **Persistence**: Tasks are saved to a specific asset file and persist across sessions.
 
+- **Object Grouper**:
+    - **Non-Destructive Grouping**: Organize objects into logical groups without changing the Hierarchy.
+    - **Visual Indicators**: Colored dots in Hierarchy for grouped objects.
+    - **Bulk Operations**: Toggle visibility, lock state, and selection for entire groups.
+    - **Drag & Drop**: Easily add objects to groups via drag and drop.
+
 ## Installation
 
 1. Open Unity Package Manager
