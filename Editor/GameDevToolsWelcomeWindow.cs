@@ -63,6 +63,13 @@ namespace UnityProductivityTools
                 null // Passive
             );
 
+            // 6. Task Manager
+            DrawToolItem(
+                "Task Manager",
+                "Project-wide task tracking tool. Assign priorities, owners, and statuses to keep track of your work.",
+                "Tools/GameDevTools/Task Manager"
+            );
+
             EditorGUILayout.EndScrollView();
             
             // Footer

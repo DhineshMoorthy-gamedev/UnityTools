@@ -32,6 +32,11 @@ Enhanced toolbar with quick access to common operations:
     - **Restore**: Revert objects to saved states.
     - Useful for testing different configurations without permanent changes.
 
+- **Task Manager**:
+    - **Global To-Do List**: Manage tasks project-wide without treating them as MonoBehaviours.
+    - **Features**: Priority levels (color-coded), status tracking, and owner assignment.
+    - **Persistence**: Tasks are saved to a specific asset file and persist across sessions.
+
 ## Installation
 
 1. Open Unity Package Manager
@@ -47,4 +52,5 @@ Most tools are automatically active upon installation.
 
 ## License
 
+MIT License
 MIT License
