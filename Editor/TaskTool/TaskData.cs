@@ -21,6 +21,13 @@ namespace UnityProductivityTools.TaskTool.Editor
     }
 
     [Serializable]
+    public class TaskLink
+    {
+        public UnityEngine.Object Object;
+        public string GlobalObjectId;
+    }
+
+    [Serializable]
     public class TaskItem
     {
         public string Title;
@@ -28,8 +35,17 @@ namespace UnityProductivityTools.TaskTool.Editor
         public string Description;
         public TaskPriority Priority = TaskPriority.Medium;
         public TaskStatus Status = TaskStatus.Pending;
-        public string Owner;
+        [UnityEngine.Serialization.FormerlySerializedAs("Owner")]
+        public string Assignee;
+        public string Assigner;
         public bool IsExpanded = true;
+        
+        public List<TaskLink> Links = new List<TaskLink>();
+
+        // Deprecated fields kept for migration
+        public UnityEngine.Object LinkedObject; 
+        public string LinkedGlobalObjectId; 
+        
         public string CreatedDate; // Added for tracking
         
         public TaskItem()

@@ -62,23 +62,77 @@ namespace UnityProductivityTools.TaskTool.Editor
             Debug.Log($"Created new TaskData at {AssetPath}");
         }
 
-        private void OnGUI()
+        private TeamData _teamData;
+        private const string TeamAssetPath = "Assets/Editor/Resources/TeamData.asset";
+        private bool _showTeamSettings = false;
+
+        private void LoadTeamData()
         {
-            if (_taskData == null)
+            _teamData = Resources.Load<TeamData>("TeamData");
+            if (_teamData == null)
             {
-                LoadTaskData();
-                if (_taskData == null)
+                string[] guids = AssetDatabase.FindAssets("t:TeamData");
+                if (guids.Length > 0)
                 {
-                    EditorGUILayout.HelpBox("Could not load or create Task Data.", MessageType.Error);
-                    if (GUILayout.Button("Retry Load")) LoadTaskData();
-                    return;
+                    string path = AssetDatabase.GUIDToAssetPath(guids[0]);
+                    _teamData = AssetDatabase.LoadAssetAtPath<TeamData>(path);
                 }
             }
+
+            if (_teamData == null)
+            {
+                CreateTeamData();
+            }
+        }
+
+        private void CreateTeamData()
+        {
+            _teamData = CreateInstance<TeamData>();
+            
+            // Ensure directory exists (Reuse existing logic or safe check)
+             string directory = Path.GetDirectoryName(TeamAssetPath);
+            if (!Directory.Exists(directory)) Directory.CreateDirectory(directory);
+
+            AssetDatabase.CreateAsset(_teamData, TeamAssetPath);
+            AssetDatabase.SaveAssets();
+            
+            // Auto-migrate existing users
+            if (_taskData != null)
+            {
+                foreach (var task in _taskData.Tasks)
+                {
+                    AddMemberIfNotExists(task.Assigner);
+                    AddMemberIfNotExists(task.Assignee);
+                }
+            }
+            EditorUtility.SetDirty(_teamData);
+            AssetDatabase.SaveAssets();
+        }
+
+        private void AddMemberIfNotExists(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return;
+            if (!_teamData.Members.Contains(name))
+            {
+                _teamData.Members.Add(name);
+            }
+        }
+
+        private void OnGUI()
+        {
+            if (_taskData == null) LoadTaskData();
+            if (_teamData == null) LoadTeamData();
+
+            if (_taskData == null || _teamData == null) return;
 
             // Toolbar
             EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
             GUILayout.Label("Project Tasks", EditorStyles.boldLabel);
             GUILayout.FlexibleSpace();
+            if (GUILayout.Button("Manage Team", EditorStyles.toolbarButton))
+            {
+                _showTeamSettings = !_showTeamSettings;
+            }
             if (GUILayout.Button("Add Task", EditorStyles.toolbarButton))
             {
                 _taskData.Tasks.Insert(0, new TaskItem()); // Add to top
@@ -87,8 +141,17 @@ namespace UnityProductivityTools.TaskTool.Editor
             if (GUILayout.Button("Refresh", EditorStyles.toolbarButton))
             {
                 LoadTaskData();
+                LoadTeamData();
             }
             EditorGUILayout.EndHorizontal();
+
+            if (_showTeamSettings)
+            {
+                DrawTeamSettings();
+                EditorGUILayout.Space();
+                GuiLine();
+                EditorGUILayout.Space();
+            }
 
             EditorGUILayout.Space();
 
@@ -105,6 +168,28 @@ namespace UnityProductivityTools.TaskTool.Editor
             }
 
             EditorGUILayout.EndScrollView();
+        }
+
+        private void DrawTeamSettings()
+        {
+             EditorGUILayout.HelpBox("Manage Team Members (populates dropdowns)", MessageType.Info);
+             
+             SerializedObject so = new SerializedObject(_teamData);
+             SerializedProperty membersProp = so.FindProperty("Members");
+             
+             EditorGUILayout.PropertyField(membersProp, true); // Use default list UI
+             
+             if (so.ApplyModifiedProperties())
+             {
+                 EditorUtility.SetDirty(_teamData);
+             }
+        }
+
+        private void GuiLine( int i_height = 1 )
+        {
+           Rect rect = EditorGUILayout.GetControlRect(false, i_height );
+           rect.height = i_height;
+           EditorGUI.DrawRect(rect, new Color ( 0.5f,0.5f,0.5f, 1 ) );
         }
 
         private void DrawTaskItem(TaskItem task, int index)
@@ -154,11 +239,106 @@ namespace UnityProductivityTools.TaskTool.Editor
                 
                 EditorGUILayout.BeginHorizontal();
                 task.Priority = (TaskPriority)EditorGUILayout.EnumPopup("Priority", task.Priority);
-                task.Owner = EditorGUILayout.TextField("Owner", task.Owner);
+                EditorGUILayout.EndHorizontal();
+
+                // TEAM MEMBER DROPDOWNS
+                string[] options = _teamData.Members.ToArray();
+                
+                EditorGUILayout.BeginHorizontal();
+                
+                // Assigner
+                int assignerIndex = -1;
+                if (!string.IsNullOrEmpty(task.Assigner)) assignerIndex = System.Array.IndexOf(options, task.Assigner);
+                
+                int newAssignerIndex = EditorGUILayout.Popup("Assigner", assignerIndex, options);
+                if (newAssignerIndex >= 0 && newAssignerIndex < options.Length) task.Assigner = options[newAssignerIndex];
+                
+                // Assignee
+                int assigneeIndex = -1;
+                if (!string.IsNullOrEmpty(task.Assignee)) assigneeIndex = System.Array.IndexOf(options, task.Assignee);
+                
+                int newAssigneeIndex = EditorGUILayout.Popup("Assignee", assigneeIndex, options);
+                if (newAssigneeIndex >= 0 && newAssigneeIndex < options.Length) task.Assignee = options[newAssigneeIndex];
+
                 EditorGUILayout.EndHorizontal();
 
                 EditorGUILayout.LabelField("Description");
                 task.Description = EditorGUILayout.TextArea(task.Description, GUILayout.Height(60));
+
+                EditorGUILayout.Space(5);
+
+                // --- Deep Linking Logic ---
+                EditorGUILayout.LabelField("Linked Objects", EditorStyles.boldLabel);
+                
+                // 1. Migration: Move old single data to new list
+                if ((task.LinkedObject != null || !string.IsNullOrEmpty(task.LinkedGlobalObjectId)) && task.Links.Count == 0)
+                {
+                    task.Links.Add(new TaskLink { Object = task.LinkedObject, GlobalObjectId = task.LinkedGlobalObjectId });
+                    task.LinkedObject = null;
+                    task.LinkedGlobalObjectId = null;
+                    EditorUtility.SetDirty(_taskData);
+                }
+
+                // 2. Draw List
+                for (int i = 0; i < task.Links.Count; i++)
+                {
+                    TaskLink link = task.Links[i];
+                    EditorGUILayout.BeginHorizontal();
+                    
+                    UnityEngine.Object currentObject = link.Object;
+
+                    // Try to resolve reference from GlobalObjectId if Object is missing
+                    if (currentObject == null && !string.IsNullOrEmpty(link.GlobalObjectId))
+                    {
+                        if (GlobalObjectId.TryParse(link.GlobalObjectId, out GlobalObjectId id))
+                        {
+                            currentObject = GlobalObjectId.GlobalObjectIdentifierToObjectSlow(id);
+                        }
+                    }
+
+                    EditorGUI.BeginChangeCheck();
+                    UnityEngine.Object newObject = EditorGUILayout.ObjectField(GUIContent.none, currentObject, typeof(UnityEngine.Object), true);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                         if (newObject == null) // Clear content
+                         {
+                             link.Object = null;
+                             link.GlobalObjectId = null;
+                             EditorUtility.SetDirty(_taskData);
+                         }
+                         else if (AssetDatabase.Contains(newObject)) // Is Project Asset
+                         {
+                             link.Object = newObject;
+                             link.GlobalObjectId = null; 
+                             EditorUtility.SetDirty(_taskData);
+                         }
+                         else // Is Scene Object
+                         {
+                             link.Object = null; 
+                             link.GlobalObjectId = GlobalObjectId.GetGlobalObjectIdSlow(newObject).ToString();
+                             EditorUtility.SetDirty(_taskData);
+                         }
+                    }
+
+                    if (GUILayout.Button("X", GUILayout.Width(20)))
+                    {
+                        task.Links.RemoveAt(i);
+                        EditorUtility.SetDirty(_taskData);
+                        i--; // Adjust index
+                    }
+                    
+                    EditorGUILayout.EndHorizontal();
+                }
+
+                // 3. Add Button
+                if (GUILayout.Button("+ Add Link"))
+                {
+                    task.Links.Add(new TaskLink());
+                    EditorUtility.SetDirty(_taskData);
+                }
+                
+                // --------------------------
+
                 
                 EditorGUILayout.LabelField($"Created: {task.CreatedDate}", EditorStyles.miniLabel);
 
