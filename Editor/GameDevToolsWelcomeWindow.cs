@@ -77,6 +77,13 @@ namespace UnityProductivityTools
                 "Tools/GameDevTools/Object Grouper"
             );
 
+            // 8. Project Bootstrapper
+            DrawToolItem(
+                "Project Bootstrapper",
+                "Initialize new projects with standard folders, base scripts (Singleton, ObjectPool), and scenes in seconds.",
+                "Tools/GameDevTools/Project Bootstrapper"
+            );
+
             EditorGUILayout.EndScrollView();
             
             // Footer

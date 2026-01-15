@@ -42,6 +42,12 @@ Enhanced toolbar with quick access to common operations:
     - **Visual Indicators**: Colored dots in Hierarchy for grouped objects.
     - **Bulk Operations**: Toggle visibility, lock state, and selection for entire groups.
     - **Drag & Drop**: Easily add objects to groups via drag and drop.
+    
+- **Project Bootstrapper**:
+    - **Quick Setup**: Initialize empty projects with a standard folder structure (_Project, Scripts, Art, etc.).
+    - **Base Scripts**: Generate essential helper scripts like Singleton<T>, ObjectPool<T>, GameConstants, and more.
+    - **Scene Setup**: Auto-create Boot, Menu, and Gameplay scenes and add them to Build Settings.
+    - **Standard Settings**: One-click application of recommended project settings (Linear color space, etc.).
 
 ## Installation
 
