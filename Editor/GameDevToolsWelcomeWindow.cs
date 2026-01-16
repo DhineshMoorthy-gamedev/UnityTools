@@ -98,6 +98,13 @@ namespace UnityProductivityTools
                 "Tools/GameDevTools/TODO Scanner"
             );
 
+            // 11. Object Comparison
+            DrawToolItem(
+                "Object Comparison", 
+                "Deeply compare two GameObjects, their components, and hierarchy. Includes interactive syncing and history tracking.",
+                "Tools/GameDevTools/Object Comparison"
+            );
+
             EditorGUILayout.EndScrollView();
             
             // Footer

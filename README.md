@@ -50,9 +50,15 @@ Enhanced toolbar with quick access to common operations:
     - **Scene Setup**: Auto-create Boot, Menu, and Gameplay scenes and add them to Build Settings.
     - **Standard Settings**: One-click application of recommended project settings (Linear color space, etc.).
 
-- **TODO/FIXME Scanner**:
+- [x] **TODO/FIXME Scanner**:
     - **Code Scanning**: Automatically finds `//TODO` and `//FIXME` comments in all your project scripts.
     - **Navigation**: Click on any item to open the file directly in your IDE at the correct line.
+
+- **Object Comparison Tool**:
+    - **Deep Comparison**: Compare two GameObjects, their Transforms, Components, and Hierarchy.
+    - **Interactive Syncing**: Selectively apply changes between objects with one-click syncing (A → B or B → A).
+    - **Visual History**: Track all changes made during a session with a built-in audit trail.
+    - **Deferred Processing**: High stability IMGUI implementation prevents layout errors and flickering.
 
 
 ## Installation
