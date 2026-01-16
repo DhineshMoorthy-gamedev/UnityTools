@@ -60,6 +60,12 @@ Enhanced toolbar with quick access to common operations:
     - **Visual History**: Track all changes made during a session with a built-in audit trail.
     - **Deferred Processing**: High stability IMGUI implementation prevents layout errors and flickering.
 
+- **Advanced Inspector**:
+    - **Favorites System**: Pin frequently used components or properties for quick access.
+    - **Component Search**: Instantly filter components on a GameObject by name.
+    - **Preset Manager**: Save and load component configurations as JSON files.
+    - **Bulk Editing**: Edit components across multiple GameObjects simultaneously with a unified interface.
+
 
 ## Installation
 

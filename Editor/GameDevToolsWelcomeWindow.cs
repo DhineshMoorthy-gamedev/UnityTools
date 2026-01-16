@@ -105,6 +105,13 @@ namespace UnityProductivityTools
                 "Tools/GameDevTools/Object Comparison"
             );
 
+            // 12. Advanced Inspector
+            DrawToolItem(
+                "Advanced Inspector",
+                "Enhanced inspector with favorites, search, component presets, and bulk editing capabilities.",
+                "Tools/GameDevTools/Advanced Inspector"
+            );
+
             EditorGUILayout.EndScrollView();
             
             // Footer
