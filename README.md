@@ -24,6 +24,7 @@ Enhanced toolbar with quick access to common operations:
 
 ### 📦 Components
 - **Note Component**: Add documentation and comments directly to your GameObjects. Visible in the Scene view with customizable icons and colors. Great for leaving reminders or team instructions.
+- **Note Dashboard**: A centralized window (`Tools > GameDevTools > Note Dashboard`) to view, search, and manage all notes in your scene.
 
 ### 🔍 Advanced Tools
 - **Hidden Dependency Detector**: Analyze and find hidden dependencies in your project assets (e.g., shaders, materials) to optimize build size and track references.
@@ -48,6 +49,11 @@ Enhanced toolbar with quick access to common operations:
     - **Base Scripts**: Generate essential helper scripts like Singleton<T>, ObjectPool<T>, GameConstants, and more.
     - **Scene Setup**: Auto-create Boot, Menu, and Gameplay scenes and add them to Build Settings.
     - **Standard Settings**: One-click application of recommended project settings (Linear color space, etc.).
+
+- **TODO/FIXME Scanner**:
+    - **Code Scanning**: Automatically finds `//TODO` and `//FIXME` comments in all your project scripts.
+    - **Navigation**: Click on any item to open the file directly in your IDE at the correct line.
+
 
 ## Installation
 

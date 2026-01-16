@@ -84,6 +84,20 @@ namespace UnityProductivityTools
                 "Tools/GameDevTools/Project Bootstrapper"
             );
 
+            // 9. Note Dashboard
+            DrawToolItem(
+                "Note Dashboard",
+                "Centralized view of all Note components in the scene. Filter, search, and jump to notes instantly.",
+                "Tools/GameDevTools/Note Dashboard"
+            );
+
+            // 10. TODO Scanner
+            DrawToolItem(
+                "TODO Scanner",
+                "Automatically scans your C# scripts for //TODO and //FIXME comments. Click to jump to the exact line.",
+                "Tools/GameDevTools/TODO Scanner"
+            );
+
             EditorGUILayout.EndScrollView();
             
             // Footer
