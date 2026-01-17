@@ -108,7 +108,7 @@ namespace UnityProductivityTools
             // 12. Advanced Inspector
             DrawToolItem(
                 "Advanced Inspector",
-                "Enhanced inspector with favorites, search, component presets, and bulk editing capabilities.",
+                "Enhanced inspector with favorites, search, component presets, bulk editing, and built-in script editor with inline and maximized modes.",
                 "Tools/GameDevTools/Advanced Inspector"
             );
 

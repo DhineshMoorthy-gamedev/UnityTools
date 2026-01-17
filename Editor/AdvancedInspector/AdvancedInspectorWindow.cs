@@ -1,9 +1,11 @@
 using UnityEditor;
 using UnityEngine;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 using System.Text.RegularExpressions;
+using Object = UnityEngine.Object;
 
 namespace UnityProductivityTools.AdvancedInspector
 {
@@ -14,6 +16,15 @@ namespace UnityProductivityTools.AdvancedInspector
         private GameObject lastSelected;
         private Editor[] componentEditors;
         private List<bool> foldouts = new List<bool>();
+        
+        // Advanced Features State
+        private Dictionary<int, string> scriptEditors = new Dictionary<int, string>();
+        private Dictionary<int, bool> editingScripts = new Dictionary<int, bool>();
+        private Dictionary<int, Vector2> scriptScrolls = new Dictionary<int, Vector2>();
+        private Dictionary<int, string> scriptSearchStrings = new Dictionary<int, string>();
+        private Dictionary<int, bool> scriptSearchActive = new Dictionary<int, bool>();
+        private Dictionary<int, int> scriptSearchCurrentIndex = new Dictionary<int, int>();
+        private Dictionary<int, List<int>> scriptSearchMatches = new Dictionary<int, List<int>>();
 
         [MenuItem("Tools/GameDevTools/Advanced Inspector")]
         public static void ShowWindow()
@@ -71,6 +82,9 @@ namespace UnityProductivityTools.AdvancedInspector
                 }
             }
             componentToExpand = null;
+            
+            scriptEditors.Clear();
+            editingScripts.Clear();
         }
 
         private void CleanupEditors()
@@ -476,7 +490,8 @@ namespace UnityProductivityTools.AdvancedInspector
                 GUILayout.FlexibleSpace();
                 
                 // Use a horizontal block for buttons to prevent clipping
-                EditorGUILayout.BeginHorizontal(GUILayout.Width(60));
+                float buttonGroupWidth = (comp is MonoBehaviour) ? 90 : 60;
+                EditorGUILayout.BeginHorizontal(GUILayout.Width(buttonGroupWidth));
                 
                 if (GUILayout.Button("F", GUILayout.Width(25))) 
                 {
@@ -487,9 +502,23 @@ namespace UnityProductivityTools.AdvancedInspector
                 {
                     ShowPresetMenu(comp);
                 }
+
+                if (comp is MonoBehaviour)
+                {
+                    if (GUILayout.Button("C", GUILayout.Width(25)))
+                    {
+                        ToggleScriptEditor(i, comp);
+                    }
+                }
+
                 EditorGUILayout.EndHorizontal();
                 
                 EditorGUILayout.EndHorizontal();
+
+                if (editingScripts.ContainsKey(i) && editingScripts[i])
+                {
+                    DrawScriptEditor(i, comp);
+                }
 
                 if (foldouts[i])
                 {
@@ -661,6 +690,197 @@ namespace UnityProductivityTools.AdvancedInspector
                 } while (prop.NextVisible(false));
             }
             return paths;
+        }
+
+        // --- Advanced Features Implementation ---
+
+        private void ToggleScriptEditor(int index, Component comp)
+        {
+            if (editingScripts.ContainsKey(index))
+            {
+                editingScripts[index] = !editingScripts[index];
+            }
+            else
+            {
+                editingScripts[index] = true;
+                MonoScript script = MonoScript.FromMonoBehaviour(comp as MonoBehaviour);
+                if (script != null)
+                {
+                    scriptEditors[index] = script.text;
+                }
+            }
+        }
+
+        private void DrawScriptEditor(int index, Component comp)
+        {
+            float offset = showSidebar ? 360 : 20;
+            float availableWidth = position.width - offset - 30;
+
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox, GUILayout.MaxWidth(availableWidth));
+            
+            EditorGUILayout.BeginHorizontal();
+            GUILayout.Label("Script Editor", EditorStyles.boldLabel);
+            GUILayout.FlexibleSpace();
+            
+            if (GUILayout.Button("Maximize", EditorStyles.miniButton))
+            {
+                ScriptEditorWindow.ShowWindow(comp, scriptEditors[index]);
+            }
+            EditorGUILayout.EndHorizontal();
+
+            if (!scriptScrolls.ContainsKey(index)) scriptScrolls[index] = Vector2.zero;
+            scriptScrolls[index] = EditorGUILayout.BeginScrollView(scriptScrolls[index], GUILayout.MinHeight(150), GUILayout.MaxHeight(400));
+            
+            GUIStyle areaStyle = new GUIStyle(EditorStyles.textArea);
+            areaStyle.wordWrap = true;
+            
+            EditorGUI.BeginChangeCheck();
+            string newText = EditorGUILayout.TextArea(scriptEditors[index], areaStyle, GUILayout.ExpandHeight(true));
+            if (EditorGUI.EndChangeCheck())
+            {
+                scriptEditors[index] = newText;
+            }
+            
+            EditorGUILayout.EndScrollView();
+            
+            EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button("Save & Compile", GUILayout.Height(30), GUILayout.ExpandWidth(true)))
+            {
+                MonoScript script = MonoScript.FromMonoBehaviour(comp as MonoBehaviour);
+                if (script != null)
+                {
+                    File.WriteAllText(AssetDatabase.GetAssetPath(script), scriptEditors[index]);
+                    AssetDatabase.ImportAsset(AssetDatabase.GetAssetPath(script));
+                    editingScripts[index] = false;
+                }
+            }
+            if (GUILayout.Button("Cancel", GUILayout.Height(30), GUILayout.ExpandWidth(true)))
+            {
+                editingScripts[index] = false;
+            }
+            EditorGUILayout.EndHorizontal();
+            EditorGUILayout.EndVertical();
+        }
+
+        private void ToggleSearch(int index)
+        {
+            if (!scriptSearchActive.ContainsKey(index)) scriptSearchActive[index] = false;
+            scriptSearchActive[index] = !scriptSearchActive[index];
+            if (scriptSearchActive[index])
+            {
+                if (!scriptSearchStrings.ContainsKey(index)) scriptSearchStrings[index] = "";
+            }
+        }
+
+        private void DrawScriptSearchBar(int index)
+        {
+            EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
+            
+            EditorGUI.BeginChangeCheck();
+            scriptSearchStrings[index] = EditorGUILayout.TextField(scriptSearchStrings[index], EditorStyles.toolbarSearchField);
+            if (EditorGUI.EndChangeCheck())
+            {
+                UpdateSearchMatches(index);
+            }
+            
+            if (!string.IsNullOrEmpty(scriptSearchStrings[index]) && scriptSearchMatches.ContainsKey(index) && scriptSearchMatches[index].Count > 0)
+            {
+                if (!scriptSearchCurrentIndex.ContainsKey(index)) scriptSearchCurrentIndex[index] = 0;
+                
+                if (GUILayout.Button("◀", EditorStyles.toolbarButton, GUILayout.Width(25)))
+                {
+                    NavigateSearchPrevious(index);
+                }
+                
+                GUILayout.Label($"{scriptSearchCurrentIndex[index] + 1}/{scriptSearchMatches[index].Count}", EditorStyles.miniLabel, GUILayout.Width(50));
+                
+                if (GUILayout.Button("▶", EditorStyles.toolbarButton, GUILayout.Width(25)))
+                {
+                    NavigateSearchNext(index);
+                }
+            }
+            
+            if (GUILayout.Button("✕", EditorStyles.toolbarButton, GUILayout.Width(20)))
+            {
+                scriptSearchActive[index] = false;
+            }
+            EditorGUILayout.EndHorizontal();
+        }
+
+        private void UpdateSearchMatches(int index)
+        {
+            if (!scriptSearchMatches.ContainsKey(index)) scriptSearchMatches[index] = new List<int>();
+            scriptSearchMatches[index].Clear();
+            scriptSearchCurrentIndex[index] = 0;
+
+            if (string.IsNullOrEmpty(scriptSearchStrings[index])) return;
+
+            string text = scriptEditors[index];
+            string search = scriptSearchStrings[index];
+            int pos = 0;
+            
+            while ((pos = text.IndexOf(search, pos, StringComparison.OrdinalIgnoreCase)) != -1)
+            {
+                scriptSearchMatches[index].Add(pos);
+                pos += search.Length;
+            }
+        }
+
+        private void NavigateSearchNext(int index)
+        {
+            if (!scriptSearchMatches.ContainsKey(index) || scriptSearchMatches[index].Count == 0) return;
+            scriptSearchCurrentIndex[index] = (scriptSearchCurrentIndex[index] + 1) % scriptSearchMatches[index].Count;
+            ScrollToMatch(index);
+            Repaint();
+        }
+
+        private void NavigateSearchPrevious(int index)
+        {
+            if (!scriptSearchMatches.ContainsKey(index) || scriptSearchMatches[index].Count == 0) return;
+            scriptSearchCurrentIndex[index]--;
+            if (scriptSearchCurrentIndex[index] < 0) scriptSearchCurrentIndex[index] = scriptSearchMatches[index].Count - 1;
+            ScrollToMatch(index);
+            Repaint();
+        }
+
+        private void ScrollToMatch(int index)
+        {
+            if (!scriptSearchMatches.ContainsKey(index) || scriptSearchMatches[index].Count == 0) return;
+            if (!scriptSearchCurrentIndex.ContainsKey(index)) return;
+
+            int currentMatch = scriptSearchCurrentIndex[index];
+            if (currentMatch >= scriptSearchMatches[index].Count) return;
+
+            int matchPos = scriptSearchMatches[index][currentMatch];
+            string text = scriptEditors[index];
+            
+            // Count lines before the match
+            int lineNumber = 0;
+            for (int i = 0; i < matchPos && i < text.Length; i++)
+            {
+                if (text[i] == '\n') lineNumber++;
+            }
+
+            // Estimate scroll position (approximate line height of 16 pixels)
+            float lineHeight = 16f;
+            float targetY = lineNumber * lineHeight;
+            
+            // Center the match in the view (scroll view height is approximately 150-400)
+            targetY = Mathf.Max(0, targetY - 75);
+            
+            if (!scriptScrolls.ContainsKey(index)) scriptScrolls[index] = Vector2.zero;
+            scriptScrolls[index] = new Vector2(scriptScrolls[index].x, targetY);
+        }
+
+        private string HighlightSearchMatches(string text, int index)
+        {
+            if (!scriptSearchActive.ContainsKey(index) || !scriptSearchActive[index]) return text;
+            if (string.IsNullOrEmpty(scriptSearchStrings[index])) return text;
+            if (!scriptSearchMatches.ContainsKey(index) || scriptSearchMatches[index].Count == 0) return text;
+
+            // For TextArea, we can't use rich text, so we'll use a different approach
+            // We'll show the highlighted version in a separate label above the text area
+            return text;
         }
 
 

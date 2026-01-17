@@ -65,6 +65,9 @@ Enhanced toolbar with quick access to common operations:
     - **Component Search**: Instantly filter components on a GameObject by name.
     - **Preset Manager**: Save and load component configurations as JSON files.
     - **Bulk Editing**: Edit components across multiple GameObjects simultaneously with a unified interface.
+    - **Script Editor**: Edit MonoBehaviour scripts directly from the inspector with inline or maximized window modes.
+        - **Inline Editor**: Quick edits with mousewheel scrolling and auto-wrap.
+        - **Maximize Window**: Open scripts in a separate, resizable window with monospace font for better readability.
 
 
 ## Installation
