@@ -3,6 +3,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
+using System.Text.RegularExpressions;
 
 namespace UnityProductivityTools.AdvancedInspector
 {
@@ -333,9 +334,13 @@ namespace UnityProductivityTools.AdvancedInspector
                 string compType = comp.GetType().FullName;
                 string compName = comp.GetType().Name;
 
-                if (!string.IsNullOrEmpty(searchString) && !compName.ToLower().Contains(searchString.ToLower()))
+                bool componentMatches = MatchesSearch(compName, searchString);
+                List<string> matchingProps = null;
+
+                if (!componentMatches && !string.IsNullOrEmpty(searchString))
                 {
-                    continue;
+                    matchingProps = GetMatchingPropertyPaths(componentEditors[i].serializedObject, searchString);
+                    if (matchingProps.Count == 0) continue;
                 }
                 
                 Rect cRect = EditorGUILayout.BeginVertical(EditorStyles.helpBox);
@@ -386,10 +391,26 @@ namespace UnityProductivityTools.AdvancedInspector
                     EditorGUIUtility.wideMode = (position.width - (showSidebar ? 150 : 0)) > 330;
 
                     EditorGUI.BeginChangeCheck();
-                    componentEditors[i].OnInspectorGUI();
+                    
+                    if (matchingProps != null && matchingProps.Count > 0)
+                    {
+                        // Smart Mode: Only draw matching properties
+                        componentEditors[i].serializedObject.Update();
+                        foreach (var path in matchingProps)
+                        {
+                            SerializedProperty p = componentEditors[i].serializedObject.FindProperty(path);
+                            if (p != null) EditorGUILayout.PropertyField(p, true);
+                        }
+                    }
+                    else
+                    {
+                        // Full Mode
+                        componentEditors[i].OnInspectorGUI();
+                    }
+
                     if (EditorGUI.EndChangeCheck())
                     {
-                        // Handle changes if needed
+                        componentEditors[i].serializedObject.ApplyModifiedProperties();
                     }
 
                     DrawNullReferenceWarnings(componentEditors[i].serializedObject);
@@ -496,6 +517,44 @@ namespace UnityProductivityTools.AdvancedInspector
                 }
                 EditorGUILayout.EndVertical();
             }
+        }
+
+        private bool MatchesSearch(string text, string pattern)
+        {
+            if (string.IsNullOrEmpty(pattern)) return true;
+            if (string.IsNullOrEmpty(text)) return false;
+
+            if (pattern.StartsWith("/"))
+            {
+                try
+                {
+                    string regexPattern = pattern.Substring(1);
+                    return Regex.IsMatch(text, regexPattern, RegexOptions.IgnoreCase);
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+
+            return text.ToLower().Contains(pattern.ToLower());
+        }
+
+        private List<string> GetMatchingPropertyPaths(SerializedObject so, string pattern)
+        {
+            List<string> paths = new List<string>();
+            SerializedProperty prop = so.GetIterator();
+            if (prop.NextVisible(true))
+            {
+                do
+                {
+                    if (MatchesSearch(prop.displayName, pattern) || MatchesSearch(prop.name, pattern))
+                    {
+                        paths.Add(prop.propertyPath);
+                    }
+                } while (prop.NextVisible(false));
+            }
+            return paths;
         }
 
 
