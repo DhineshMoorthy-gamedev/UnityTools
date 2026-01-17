@@ -59,8 +59,18 @@ namespace UnityProductivityTools.AdvancedInspector
             {
                 if (components[i] == null) continue;
                 componentEditors[i] = Editor.CreateEditor(components[i]);
-                foldouts.Add(true);
+                
+                // If this is the component we want to expand/ping
+                if (componentToExpand != null && components[i].GetType().FullName == componentToExpand)
+                {
+                    foldouts.Add(true);
+                }
+                else
+                {
+                    foldouts.Add(true); // Default to open for now, or match previous if possible
+                }
             }
+            componentToExpand = null;
         }
 
         private void CleanupEditors()
@@ -86,6 +96,7 @@ namespace UnityProductivityTools.AdvancedInspector
         private float targetScrollY = -1f;
         private string highlightKey = null;
         private float highlightTimer = 0f;
+        private string componentToExpand = null;
 
         private void OnGUI()
         {
@@ -211,6 +222,63 @@ namespace UnityProductivityTools.AdvancedInspector
                 }
             }
 
+            // Play Mode Deltas
+            var pending = PlayModeTracker.GetPendingDeltas();
+            if (pending.Count > 0)
+            {
+                EditorGUILayout.Space(10);
+                GUILayout.Label("Pending Play Mode Changes", EditorStyles.boldLabel);
+                
+                EditorGUILayout.BeginHorizontal();
+                if (GUILayout.Button("Apply All", EditorStyles.miniButton))
+                {
+                    foreach (var d in pending.ToList()) PlayModeTracker.ApplyDelta(d);
+                    Repaint();
+                }
+                if (GUILayout.Button("Discard All", EditorStyles.miniButton))
+                {
+                    PlayModeTracker.ClearDeltas();
+                    Repaint();
+                }
+                EditorGUILayout.EndHorizontal();
+
+                string keyToResolve = null;
+                bool shouldApply = false;
+                PlayModeTracker.PropertyDelta targetDelta = null;
+
+                foreach (var delta in pending)
+                {
+                    EditorGUILayout.BeginHorizontal(EditorStyles.helpBox);
+                    string label = $"[{delta.displayName}] {delta.valueStr}";
+                    
+                    if (GUILayout.Button(new GUIContent(label, "Click to Ping in Inspector"), EditorStyles.miniLabel, GUILayout.MaxWidth(250)))
+                    {
+                        FocusPendingChange(delta);
+                    }
+                    
+                    if (GUILayout.Button("✓", EditorStyles.miniButton, GUILayout.Width(25)))
+                    {
+                        keyToResolve = delta.Key;
+                        targetDelta = delta;
+                        shouldApply = true;
+                    }
+                    if (GUILayout.Button("✕", EditorStyles.miniButton, GUILayout.Width(25)))
+                    {
+                        keyToResolve = delta.Key;
+                        shouldApply = false;
+                    }
+                    EditorGUILayout.EndHorizontal();
+                    if (keyToResolve != null) break;
+                }
+
+                if (keyToResolve != null)
+                {
+                    if (shouldApply && targetDelta != null) PlayModeTracker.ApplyDelta(targetDelta);
+                    else PlayModeTracker.DiscardDelta(keyToResolve);
+                    Repaint();
+                }
+            }
+
             EditorGUILayout.EndScrollView();
             EditorGUILayout.EndVertical();
         }
@@ -244,8 +312,46 @@ namespace UnityProductivityTools.AdvancedInspector
             searchString = "";
             pendingFocusKey = typeName;
             highlightKey = typeName;
-            highlightTimer = 1f;
+            highlightTimer = 1.0f;
+
+            // Expand it
+            if (componentEditors != null)
+            {
+                for (int i = 0; i < componentEditors.Length; i++)
+                {
+                    if (componentEditors[i] != null && componentEditors[i].target.GetType().FullName == typeName)
+                    {
+                        foldouts[i] = true;
+                        break;
+                    }
+                }
+            }
             Repaint();
+        }
+
+        private void FocusPendingChange(PlayModeTracker.PropertyDelta delta)
+        {
+            GameObject go = GameObject.Find(delta.scenePath);
+            if (go == null)
+            {
+                Debug.LogWarning($"[AdvancedInspector] Cannot ping: Object at '{delta.scenePath}' not found.");
+                return;
+            }
+
+            componentToExpand = delta.compType;
+            pendingFocusKey = delta.compType;
+            highlightKey = delta.compType;
+            highlightTimer = 1.5f;
+
+            if (Selection.activeGameObject != go)
+            {
+                Selection.activeGameObject = go;
+            }
+            else
+            {
+                // Already selected, just trigger focus directly
+                FocusComponent(delta.compType);
+            }
         }
 
         private void DrawSearchBar()
