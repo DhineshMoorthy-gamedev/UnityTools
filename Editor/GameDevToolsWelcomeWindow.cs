@@ -63,56 +63,63 @@ namespace UnityProductivityTools
                 null // Passive
             );
 
-            // 6. Note Dashboard
+            // 6. Integrated Terminal
+            DrawToolItem(
+                "Integrated Terminal",
+                "Dockable terminal window with multi-tab support, command history, and shell selection (CMD, PowerShell).",
+                "Tools/GameDevTools/Integrated Terminal"
+            );
+
+            // 7. Note Dashboard
             DrawToolItem(
                 "Note Dashboard",
                 "Centralized view of all Note components in the scene. Filter, search, and jump to notes instantly.",
                 "Tools/GameDevTools/Note Dashboard"
             );
 
-            // 7. Object Comparison
+            // 8. Object Comparison
             DrawToolItem(
                 "Object Comparison", 
                 "Deeply compare two GameObjects, their components, and hierarchy. Includes interactive syncing and history tracking.",
                 "Tools/GameDevTools/Object Comparison"
             );
 
-            // 8. Object Grouper
+            // 9. Object Grouper
             DrawToolItem(
                 "Object Grouper",
                 "Organize objects into logical groups without modifying the Hierarchy. Supports bulk visibility, locking, and selection.",
                 "Tools/GameDevTools/Object Grouper"
             );
 
-            // 9. Project Bootstrapper
+            // 10. Project Bootstrapper
             DrawToolItem(
                 "Project Bootstrapper",
                 "Initialize new projects with standard folders, base scripts (Singleton, ObjectPool), and scenes in seconds.",
                 "Tools/GameDevTools/Project Bootstrapper"
             );
 
-            // 10. Quick Prefab Creator
+            // 11. Quick Prefab Creator
             DrawToolItem(
                 "Quick Prefab Creator", 
                 "Create prefabs instantly from GameObjects. (Right-click > Prefab > Make Prefab)",
                 null // Passive tool / Context Menu
             );
 
-            // 11. Snapshot Manager
+            // 12. Snapshot Manager
             DrawToolItem(
                 "Snapshot Manager", 
                 "Capture, View, and Restore GameObject states (Transforms & Component values). Includes undo support.",
                 "Tools/GameDevTools/Snapshot Manager"
             );
 
-            // 12. Task Manager
+            // 13. Task Manager
             DrawToolItem(
                 "Task Manager",
                 "Project-wide task tracking tool. Assign priorities, owners, and statuses to keep track of your work.",
                 "Tools/GameDevTools/Task Manager"
             );
 
-            // 13. TODO Scanner
+            // 14. TODO Scanner
             DrawToolItem(
                 "TODO Scanner",
                 "Automatically scans your C# scripts for //TODO and //FIXME comments. Click to jump to the exact line.",

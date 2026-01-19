@@ -44,6 +44,13 @@ Enhanced toolbar with quick access to common operations:
 
 - **Hidden Dependency Detector**: Analyze and find hidden dependencies in your project assets (e.g., shaders, materials) to optimize build size and track references.
 
+- **Integrated Terminal**:
+    - **Multi-Tabbed**: Support for multiple terminal sessions within the same window.
+    - **Shell Support**: Switch between CMD and PowerShell on Windows.
+    - **Command History**: Navigate through previous commands with Up/Down arrows.
+    - **Context Menu**: Right-click any folder or asset to "Open in Terminal Here".
+    - **Monospace Font**: Clean, readable output using monospace typography.
+
 - **Object Comparison Tool**:
     - **Deep Comparison**: Compare two GameObjects, their Transforms, Components, and Hierarchy.
     - **Interactive Syncing**: Selectively apply changes between objects with one-click syncing (A → B or B → A).
