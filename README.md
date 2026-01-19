@@ -27,39 +27,6 @@ Enhanced toolbar with quick access to common operations:
 - **Note Dashboard**: A centralized window (`Tools > GameDevTools > Note Dashboard`) to view, search, and manage all notes in your scene.
 
 ### 🔍 Advanced Tools
-- **Hidden Dependency Detector**: Analyze and find hidden dependencies in your project assets (e.g., shaders, materials) to optimize build size and track references.
-- **Snapshot Tool**: 
-    - **Capture**: specific states of GameObjects.
-    - **Restore**: Revert objects to saved states.
-    - Useful for testing different configurations without permanent changes.
-
-- **Task Manager**:
-    - **Global To-Do List**: Manage tasks project-wide without treating them as MonoBehaviours.
-    - **Features**: Priority levels (color-coded), status tracking, and owner assignment.
-    - **Persistence**: Tasks are saved to a specific asset file and persist across sessions.
-
-- **Object Grouper**:
-    - **Non-Destructive Grouping**: Organize objects into logical groups without changing the Hierarchy.
-    - **Visual Indicators**: Colored dots in Hierarchy for grouped objects.
-    - **Bulk Operations**: Toggle visibility, lock state, and selection for entire groups.
-    - **Drag & Drop**: Easily add objects to groups via drag and drop.
-    
-- **Project Bootstrapper**:
-    - **Quick Setup**: Initialize empty projects with a standard folder structure (_Project, Scripts, Art, etc.).
-    - **Base Scripts**: Generate essential helper scripts like Singleton<T>, ObjectPool<T>, GameConstants, and more.
-    - **Scene Setup**: Auto-create Boot, Menu, and Gameplay scenes and add them to Build Settings.
-    - **Standard Settings**: One-click application of recommended project settings (Linear color space, etc.).
-
-- [x] **TODO/FIXME Scanner**:
-    - **Code Scanning**: Automatically finds `//TODO` and `//FIXME` comments in all your project scripts.
-    - **Navigation**: Click on any item to open the file directly in your IDE at the correct line.
-
-- **Object Comparison Tool**:
-    - **Deep Comparison**: Compare two GameObjects, their Transforms, Components, and Hierarchy.
-    - **Interactive Syncing**: Selectively apply changes between objects with one-click syncing (A → B or B → A).
-    - **Visual History**: Track all changes made during a session with a built-in audit trail.
-    - **Deferred Processing**: High stability IMGUI implementation prevents layout errors and flickering.
-
 - **Advanced Inspector**:
     - **Favorites System**: Pin frequently used components or properties for quick access.
     - **Component Search**: Instantly filter components on a GameObject by name.
@@ -68,6 +35,46 @@ Enhanced toolbar with quick access to common operations:
     - **Script Editor**: Edit MonoBehaviour scripts directly from the inspector with inline or maximized window modes.
         - **Inline Editor**: Quick edits with mousewheel scrolling and auto-wrap.
         - **Maximize Window**: Open scripts in a separate, resizable window with monospace font for better readability.
+
+- **Asset Sync Tool**:
+    - **Sync**: Mark files/folders to automatically sync to an external location (backup/shared drive).
+    - **History**: Track sync operations with a built-in log.
+    - **Smart UI**: Hover highlights and quick navigation to external folders.
+    - **Context Menu**: Right-click assets to "Mark for Sync".
+
+- **Hidden Dependency Detector**: Analyze and find hidden dependencies in your project assets (e.g., shaders, materials) to optimize build size and track references.
+
+- **Object Comparison Tool**:
+    - **Deep Comparison**: Compare two GameObjects, their Transforms, Components, and Hierarchy.
+    - **Interactive Syncing**: Selectively apply changes between objects with one-click syncing (A → B or B → A).
+    - **Visual History**: Track all changes made during a session with a built-in audit trail.
+    - **Deferred Processing**: High stability IMGUI implementation prevents layout errors and flickering.
+
+- **Object Grouper**:
+    - **Non-Destructive Grouping**: Organize objects into logical groups without changing the Hierarchy.
+    - **Visual Indicators**: Colored dots in Hierarchy for grouped objects.
+    - **Bulk Operations**: Toggle visibility, lock state, and selection for entire groups.
+    - **Drag & Drop**: Easily add objects to groups via drag and drop.
+
+- **Project Bootstrapper**:
+    - **Quick Setup**: Initialize empty projects with a standard folder structure (_Project, Scripts, Art, etc.).
+    - **Base Scripts**: Generate essential helper scripts like Singleton<T>, ObjectPool<T>, GameConstants, and more.
+    - **Scene Setup**: Auto-create Boot, Menu, and Gameplay scenes and add them to Build Settings.
+    - **Standard Settings**: One-click application of recommended project settings (Linear color space, etc.).
+
+- **Snapshot Tool**: 
+    - **Capture**: specific states of GameObjects.
+    - **Restore**: Revert objects to saved states.
+    - **Useful for testing different configurations without permanent changes.**
+
+- **Task Manager**:
+    - **Global To-Do List**: Manage tasks project-wide without treating them as MonoBehaviours.
+    - **Features**: Priority levels (color-coded), status tracking, and owner assignment.
+    - **Persistence**: Tasks are saved to a specific asset file and persist across sessions.
+
+- [x] **TODO/FIXME Scanner**:
+    - **Code Scanning**: Automatically finds `//TODO` and `//FIXME` comments in all your project scripts.
+    - **Navigation**: Click on any item to open the file directly in your IDE at the correct line.
 
 
 ## Installation
