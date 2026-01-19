@@ -13,7 +13,9 @@ namespace UnityProductivityTools.Terminal
         private string commandInput = "";
         private GUIStyle outputStyle;
         private GUIStyle inputStyle;
+        private GUIStyle promptStyle;
         private Font monospaceFont;
+        private Rect outputAreaRect;
 
         [MenuItem("Tools/GameDevTools/Integrated Terminal %`")]
         public static void ShowWindow()
@@ -87,10 +89,14 @@ namespace UnityProductivityTools.Terminal
             DrawOutputArea();
             DrawInputField();
 
-            // Always try to focus the input if nothing else is focused
-            if (string.IsNullOrEmpty(GUI.GetNameOfFocusedControl()) || GUI.GetNameOfFocusedControl() == "TerminalInput")
+            // Auto-focus if nothing else is focused (keeps it ready to type)
+            // Use Layout event for focus changes to prevent rendering glitches
+            if (Event.current.type == EventType.Layout)
             {
-                GUI.FocusControl("TerminalInput");
+                if (string.IsNullOrEmpty(GUI.GetNameOfFocusedControl()) && GUIUtility.hotControl == 0)
+                {
+                    GUI.FocusControl("TerminalInput");
+                }
             }
         }
 
@@ -110,8 +116,18 @@ namespace UnityProductivityTools.Terminal
                 inputStyle = new GUIStyle(EditorStyles.textField);
                 inputStyle.font = monospaceFont;
                 inputStyle.fontSize = 14;
-                inputStyle.padding = new RectOffset(8, 8, 8, 8);
+                inputStyle.padding = new RectOffset(10, 10, 0, 0); // Horizontal padding only
+                inputStyle.alignment = TextAnchor.MiddleLeft;
                 inputStyle.fixedHeight = 35;
+            }
+
+            if (promptStyle == null)
+            {
+                promptStyle = new GUIStyle(EditorStyles.label);
+                promptStyle.font = monospaceFont;
+                promptStyle.fontSize = 12;
+                promptStyle.alignment = TextAnchor.MiddleLeft;
+                promptStyle.normal.textColor = EditorGUIUtility.isProSkin ? new Color(0.5f, 0.8f, 1f) : new Color(0f, 0.3f, 0.6f);
             }
         }
 
@@ -207,8 +223,21 @@ namespace UnityProductivityTools.Terminal
             scrollPos = EditorGUILayout.BeginScrollView(scrollPos, GUILayout.ExpandHeight(true));
             
             // Use SelectableLabel to allow copying data by dragging
-            float height = outputStyle.CalcHeight(new GUIContent(session.Output), position.width - 35);
-            EditorGUILayout.SelectableLabel(session.Output, outputStyle, GUILayout.MinHeight(height), GUILayout.ExpandHeight(true));
+            // SelectableLabel requires a fixed or calculated height to work inside a ScrollView
+            float width = position.width - 35;
+            float height = outputStyle.CalcHeight(new GUIContent(session.Output), width);
+            
+            // Increase height slightly to prevent clipping and ensure full visibility
+            height += 20;
+
+            GUI.SetNextControlName("TerminalOutput");
+            EditorGUILayout.SelectableLabel(session.Output, outputStyle, GUILayout.MinHeight(height), GUILayout.Width(width));
+            
+            // Store the rect of the output area for click detection
+            if (Event.current.type == EventType.Repaint)
+            {
+                outputAreaRect = GUILayoutUtility.GetLastRect();
+            }
 
             if (scrollToBottom)
             {
@@ -228,11 +257,6 @@ namespace UnityProductivityTools.Terminal
             
             // Show current directory in prompt
             string prompt = session.CurrentDirectory + " >";
-            GUIStyle promptStyle = new GUIStyle(EditorStyles.label);
-            promptStyle.font = monospaceFont;
-            promptStyle.fontSize = 12;
-            promptStyle.normal.textColor = EditorGUIUtility.isProSkin ? new Color(0.5f, 0.8f, 1f) : new Color(0f, 0.3f, 0.6f);
-            
             GUILayout.Label(prompt, promptStyle, GUILayout.Height(35));
             
             // Detect Enter key before it's consumed by the TextField
@@ -259,12 +283,6 @@ namespace UnityProductivityTools.Terminal
             }
 
             EditorGUILayout.EndHorizontal();
-            
-            // Ensure focus stays on input if window is clicked
-            if (Event.current.type == EventType.MouseDown)
-            {
-                GUI.FocusControl("TerminalInput");
-            }
         }
 
         private void HandleKeyboard()
@@ -275,13 +293,24 @@ namespace UnityProductivityTools.Terminal
             Event e = Event.current;
             if (e.type == EventType.KeyDown)
             {
-                // Ctrl+C to interrupt
                 if (e.control && e.keyCode == KeyCode.C)
                 {
-                    session.SendControlC();
-                    e.Use();
-                    Repaint();
+                    // Only send Ctrl+C to the session if the input field is focused and has no selection
+                    // Otherwise, allow the standard Copy behavior to happen
+                    bool inputFocused = (GUI.GetNameOfFocusedControl() == "TerminalInput");
+                    
+                    TextEditor te = (TextEditor)GUIUtility.GetStateObject(typeof(TextEditor), GUIUtility.keyboardControl);
+                    bool hasSelection = te != null && te.hasSelection;
+
+                    if (inputFocused && !hasSelection)
+                    {
+                        session.SendControlC();
+                        e.Use();
+                        Repaint();
+                    }
+                    // Else: let Unity handle the copy
                 }
+                // Auto-focusing handled in OnGUI for reliability
                 // Handle Escape to prevent focus loss
                 else if (e.keyCode == KeyCode.Escape)
                 {
