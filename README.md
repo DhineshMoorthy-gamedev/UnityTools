@@ -42,6 +42,14 @@ Enhanced toolbar with quick access to common operations:
     - **Smart UI**: Hover highlights and quick navigation to external folders.
     - **Context Menu**: Right-click assets to "Mark for Sync".
 
+- **Feature Aggregator**:
+    - **Feature Organization**: Group related scripts and assets by feature/concept for better project organization.
+    - **One-Click Access**: Open all scripts in a feature with a single click.
+    - **Drag & Drop**: Easily add scripts and assets to features via drag and drop.
+    - **Context Menu**: Right-click any asset to add it to a feature.
+    - **Search & Filter**: Quickly find features with the built-in search bar.
+    - **Access**: `Tools > GameDevTools > Feature Aggregator`
+
 - **Hidden Dependency Detector**: Analyze and find hidden dependencies in your project assets (e.g., shaders, materials) to optimize build size and track references.
 
 - **Integrated Terminal**:
@@ -79,9 +87,11 @@ Enhanced toolbar with quick access to common operations:
     - **Features**: Priority levels (color-coded), status tracking, and owner assignment.
     - **Persistence**: Tasks are saved to a specific asset file and persist across sessions.
 
-- [x] **TODO/FIXME Scanner**:
+- **TODO/FIXME Scanner**:
     - **Code Scanning**: Automatically finds `//TODO` and `//FIXME` comments in all your project scripts.
     - **Navigation**: Click on any item to open the file directly in your IDE at the correct line.
+
+
 
 
 ## Installation
