@@ -1,6 +1,5 @@
 {
-    "name": "HierarchyIcons.Editor",
-    "rootNamespace": "",
+    "name": "UnityProductivityTools.Editor",
     "references": [
         "UnityProductivityTools.Runtime"
     ],

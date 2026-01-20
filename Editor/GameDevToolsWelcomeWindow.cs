@@ -6,12 +6,17 @@ namespace UnityProductivityTools
     public class GameDevToolsWelcomeWindow : EditorWindow
     {
         private Vector2 scrollPos;
+        
+        // Foldout states
+        private bool workflowFoldout = true;
+        private bool sceneFoldout = true;
+        private bool assetsFoldout = true;
 
         [MenuItem("Tools/GameDevTools/Welcome")]
         public static void ShowWindow()
         {
             var window = GetWindow<GameDevToolsWelcomeWindow>("Tools Welcome");
-            window.minSize = new Vector2(400, 500);
+            window.minSize = new Vector2(400, 600);
         }
 
         private void OnGUI()
@@ -23,115 +28,136 @@ namespace UnityProductivityTools
             EditorGUILayout.Space();
 
             // Description
-            EditorGUILayout.HelpBox("Welcome! This package contains tools to speed up your Unity workflow. Explore the available tools below.", MessageType.Info);
+            EditorGUILayout.HelpBox("Explore our tools grouped by category. Click on a category to expand/collapse.", MessageType.Info);
             EditorGUILayout.Space();
 
             scrollPos = EditorGUILayout.BeginScrollView(scrollPos);
 
-            // 1. Add Scene to Build
-            DrawToolItem(
-                "Add Scene to Build", 
-                "Quickly add the selected scene asset to the Build Settings. (Right-click on Scene Asset in Project window > Add to Build Settings)",
-                null // Context Menu
-            );
+            // 1. Workflow & Productivity
+            workflowFoldout = EditorGUILayout.Foldout(workflowFoldout, "1. Workflow & Productivity", true, EditorStyles.foldoutHeader);
+            if (workflowFoldout)
+            {
+                EditorGUI.indentLevel++;
+                
+                DrawToolItem(
+                    "1.1 Feature Aggregator",
+                    "Organize scripts and assets by feature/concept. One-click access to all related files with drag & drop support.",
+                    "Tools/GameDevTools/Feature Aggregator"
+                );
 
-            // 2. Advanced Inspector
-            DrawToolItem(
-                "Advanced Inspector",
-                "Enhanced inspector with favorites, search, component presets, bulk editing, and built-in script editor with inline and maximized modes.",
-                "Tools/GameDevTools/Advanced Inspector"
-            );
+                DrawToolItem(
+                    "1.2 Project Bootstrapper",
+                    "Initialize new projects with standard folders, base scripts (Singleton, ObjectPool), and scenes in seconds.",
+                    "Tools/GameDevTools/Project Bootstrapper"
+                );
 
-            // 3. Feature Aggregator
-            DrawToolItem(
-                "Feature Aggregator",
-                "Organize scripts and assets by feature/concept. One-click access to all related files with drag & drop support.",
-                "Tools/GameDevTools/Feature Aggregator"
-            );
+                DrawToolItem(
+                    "1.3 Task Manager",
+                    "Project-wide task tracking tool. Assign priorities, owners, and statuses to keep track of your work.",
+                    "Tools/GameDevTools/Task Manager"
+                );
 
-            // 4. Asset Sync Tool
-            DrawToolItem(
-                "Asset Sync Tool",
-                "Mark files/folders to sync to external locations. Includes history tracking, hover highlights, and context menu support.",
-                "Tools/GameDevTools/Asset Sync/Manager Window"
-            );
+                DrawToolItem(
+                    "1.4 Task Manager (Synced)",
+                    "Real-time synchronized task manager using WebSockets. Broadcasts task updates.",
+                    "Tools/GameDevTools/Task Manager (Synced)"
+                );
 
-            // 5. Hidden Dependency Detector
-            DrawToolItem(
-                "Hidden Dependency Detector", 
-                "Scan usage of shaders, textures, and more to find hidden dependencies in your project.",
-                "Tools/GameDevTools/Hidden Dependency Detector"
-            );
-            
-            // 6. Hierarchy Icons
-            DrawToolItem(
-                "Hierarchy Icons", 
-                "Auto-displays icons in the Hierarchy view for GameObjects with specific components.",
-                null // Passive
-            );
+                DrawToolItem(
+                    "1.5 TODO Scanner",
+                    "Automatically scans your C# scripts for //TODO and //FIXME comments. Click to jump to the exact line.",
+                    "Tools/GameDevTools/TODO Scanner"
+                );
+                
+                EditorGUI.indentLevel--;
+                EditorGUILayout.Space();
+            }
 
-            // 7. Integrated Terminal
-            DrawToolItem(
-                "Integrated Terminal",
-                "Dockable terminal window with multi-tab support, command history, and shell selection (CMD, PowerShell).",
-                "Tools/GameDevTools/Integrated Terminal"
-            );
+            // 2. Scene & Hierarchy
+            sceneFoldout = EditorGUILayout.Foldout(sceneFoldout, "2. Scene & Hierarchy", true, EditorStyles.foldoutHeader);
+            if (sceneFoldout)
+            {
+                EditorGUI.indentLevel++;
 
-            // 8. Note Dashboard
-            DrawToolItem(
-                "Note Dashboard",
-                "Centralized view of all Note components in the scene. Filter, search, and jump to notes instantly.",
-                "Tools/GameDevTools/Note Dashboard"
-            );
+                DrawToolItem(
+                    "2.1 Add Scene to Build", 
+                    "Quickly add the selected scene asset to the Build Settings. (Right-click on Scene Asset in Project window > Add to Build Settings)",
+                    null // Context Menu
+                );
 
-            // 9. Object Comparison
-            DrawToolItem(
-                "Object Comparison", 
-                "Deeply compare two GameObjects, their components, and hierarchy. Includes interactive syncing and history tracking.",
-                "Tools/GameDevTools/Object Comparison"
-            );
+                DrawToolItem(
+                    "2.2 Hierarchy Icons", 
+                    "Auto-displays icons in the Hierarchy view for GameObjects with specific components.",
+                    null // Passive
+                );
 
-            // 10. Object Grouper
-            DrawToolItem(
-                "Object Grouper",
-                "Organize objects into logical groups without modifying the Hierarchy. Supports bulk visibility, locking, and selection.",
-                "Tools/GameDevTools/Object Grouper"
-            );
+                DrawToolItem(
+                    "2.3 Object Comparison", 
+                    "Deeply compare two GameObjects, their components, and hierarchy. Includes interactive syncing and history tracking.",
+                    "Tools/GameDevTools/Object Comparison"
+                );
 
-            // 11. Project Bootstrapper
-            DrawToolItem(
-                "Project Bootstrapper",
-                "Initialize new projects with standard folders, base scripts (Singleton, ObjectPool), and scenes in seconds.",
-                "Tools/GameDevTools/Project Bootstrapper"
-            );
+                DrawToolItem(
+                    "2.4 Object Grouper",
+                    "Organize objects into logical groups without modifying the Hierarchy. Supports bulk visibility, locking, and selection.",
+                    "Tools/GameDevTools/Object Grouper"
+                );
 
-            // 12. Quick Prefab Creator
-            DrawToolItem(
-                "Quick Prefab Creator", 
-                "Create prefabs instantly from GameObjects. (Right-click > Prefab > Make Prefab)",
-                null // Passive tool / Context Menu
-            );
+                DrawToolItem(
+                    "2.5 Snapshot Manager", 
+                    "Capture, View, and Restore GameObject states (Transforms & Component values). Includes undo support.",
+                    "Tools/GameDevTools/Snapshot Manager"
+                );
 
-            // 13. Snapshot Manager
-            DrawToolItem(
-                "Snapshot Manager", 
-                "Capture, View, and Restore GameObject states (Transforms & Component values). Includes undo support.",
-                "Tools/GameDevTools/Snapshot Manager"
-            );
+                EditorGUI.indentLevel--;
+                EditorGUILayout.Space();
+            }
 
-            // 14. Task Manager
-            DrawToolItem(
-                "Task Manager",
-                "Project-wide task tracking tool. Assign priorities, owners, and statuses to keep track of your work.",
-                "Tools/GameDevTools/Task Manager"
-            );
+            // 3. Asset Utilities
+            assetsFoldout = EditorGUILayout.Foldout(assetsFoldout, "3. Asset Utilities", true, EditorStyles.foldoutHeader);
+            if (assetsFoldout)
+            {
+                EditorGUI.indentLevel++;
 
-            // 15. TODO Scanner
-            DrawToolItem(
-                "TODO Scanner",
-                "Automatically scans your C# scripts for //TODO and //FIXME comments. Click to jump to the exact line.",
-                "Tools/GameDevTools/TODO Scanner"
-            );
+                DrawToolItem(
+                    "3.1 Advanced Inspector",
+                    "Enhanced inspector with favorites, search, component presets, bulk editing, and built-in script editor with inline and maximized modes.",
+                    "Tools/GameDevTools/Advanced Inspector"
+                );
+
+                DrawToolItem(
+                    "3.2 Asset Sync Tool",
+                    "Mark files/folders to sync to external locations. Includes history tracking, hover highlights, and context menu support.",
+                    "Tools/GameDevTools/Asset Sync/Manager Window"
+                );
+
+                DrawToolItem(
+                    "3.3 Hidden Dependency Detector", 
+                    "Scan usage of shaders, textures, and more to find hidden dependencies in your project.",
+                    "Tools/GameDevTools/Hidden Dependency Detector"
+                );
+
+                DrawToolItem(
+                    "3.4 Integrated Terminal",
+                    "Dockable terminal window with multi-tab support, command history, and shell selection (CMD, PowerShell).",
+                    "Tools/GameDevTools/Integrated Terminal"
+                );
+
+                DrawToolItem(
+                    "3.5 Note Dashboard",
+                    "Centralized view of all Note components in the scene. Filter, search, and jump to notes instantly.",
+                    "Tools/GameDevTools/Note Dashboard"
+                );
+
+                DrawToolItem(
+                    "3.6 Quick Prefab Creator", 
+                    "Create prefabs instantly from GameObjects. (Right-click > Prefab > Make Prefab)",
+                    null // Passive tool / Context Menu
+                );
+
+                EditorGUI.indentLevel--;
+                EditorGUILayout.Space();
+            }
 
             EditorGUILayout.EndScrollView();
             

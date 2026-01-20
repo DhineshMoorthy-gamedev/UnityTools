@@ -1,6 +1,5 @@
 {
-    "name": "HierarchyIcons.Runtime",
-    "rootNamespace": "",
+    "name": "UnityProductivityTools.Runtime",
     "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],

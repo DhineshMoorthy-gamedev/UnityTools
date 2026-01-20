@@ -85,7 +85,13 @@ Enhanced toolbar with quick access to common operations:
 - **Task Manager**:
     - **Global To-Do List**: Manage tasks project-wide without treating them as MonoBehaviours.
     - **Features**: Priority levels (color-coded), status tracking, and owner assignment.
+    - **Deep Linking**: Link tasks to GameObjects or Project Assets for quick context.
     - **Persistence**: Tasks are saved to a specific asset file and persist across sessions.
+
+- **Task Manager (Synced)**:
+    - **Real-Time Sync**: Synchronize tasks with connected clients via WebSockets.
+    - **Team Sync**: Share task lists with team members.
+    - **Access**: `Tools > GameDevTools > Task Manager (Synced)`
 
 - **TODO/FIXME Scanner**:
     - **Code Scanning**: Automatically finds `//TODO` and `//FIXME` comments in all your project scripts.
