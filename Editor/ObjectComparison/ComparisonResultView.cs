@@ -13,6 +13,7 @@ namespace UnityTools.ObjectComparison
 
         private bool isTransformExpanded = true;
         public bool ShowOnlyDifferences = false;
+        private bool drawingShowOnlyDifferences = false;
 
         public void Draw(ComparisonResult result)
         {
@@ -29,7 +30,7 @@ namespace UnityTools.ObjectComparison
              bool hasHierarchyDiffs = false;
              foreach(var c in result.ObjectDiff.ChildDifferences) if(c.Status != DiffType.Identical) hasHierarchyDiffs = true;
 
-            if (!ShowOnlyDifferences || hasHierarchyDiffs)
+            if (!drawingShowOnlyDifferences || hasHierarchyDiffs)
                 DrawHierarchyComparison(result.ObjectDiff);
 
             GUILayout.FlexibleSpace();
@@ -48,6 +49,8 @@ namespace UnityTools.ObjectComparison
 
                 drawingSyncedPaths.Clear();
                 foreach (var path in SyncedPaths) drawingSyncedPaths.Add(path);
+
+                drawingShowOnlyDifferences = ShowOnlyDifferences;
             }
         }
 
@@ -268,7 +271,7 @@ namespace UnityTools.ObjectComparison
             bool isSynced = !string.IsNullOrEmpty(key) && drawingSyncedPaths.Contains(key);
 
             // Skip if identical and filtering, UNLESS it was just synced
-            if (ShowOnlyDifferences && type == DiffType.Identical && !isSynced)
+            if (drawingShowOnlyDifferences && type == DiffType.Identical && !isSynced)
                 return;
 
             Color bg = ComparisonStyles.GetColorForDiff(type);

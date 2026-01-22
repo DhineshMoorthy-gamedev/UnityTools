@@ -20,6 +20,7 @@ namespace UnityProductivityTools.TaskTool.Editor
 
         static string serverIp = "127.0.0.1";
         static int port = 8080;
+        static string serverUrl = "wss://node-server-ws.onrender.com";
         static bool connected = false;
         static string sessionId = Guid.NewGuid().ToString(); // Unique ID for this editor session
 
@@ -82,7 +83,9 @@ namespace UnityProductivityTools.TaskTool.Editor
             cts = new CancellationTokenSource();
 
             LoadSettings(); // Reload settings before connecting
-            var uri = new Uri($"ws://{serverIp}:{port}");
+            //var uri = new Uri($"wss://{serverIp}:{port}");
+            var uri = new Uri(serverUrl);
+
             Debug.Log($"🔌 [WS] Attempting bridge to {uri} (Current State: {SocketStatus})");
 
             try

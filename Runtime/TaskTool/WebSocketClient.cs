@@ -1,11 +1,10 @@
 using System;
+using System.Collections.Concurrent;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
-using System.Collections.Concurrent;
-using Unity.VisualScripting;
 
 namespace UnityProductivityTools.TaskTool
 {
@@ -14,7 +13,7 @@ namespace UnityProductivityTools.TaskTool
         public TaskToolSettings settings; // Optional: Link the settings asset
         public string serverIp = "192.168.1.100"; // LAN IP
         public int port = 8080;
-        
+        static string serverUrl = "wss://node-server-ws.onrender.com";
         [SerializeField]
         private TaskData _syncedTasks;
         private Vector2 _scrollPos;
@@ -56,7 +55,8 @@ namespace UnityProductivityTools.TaskTool
                 port = settings.ServerPort;
             }
 
-            var uri = new Uri($"ws://{serverIp}:{port}");
+            //var uri = new Uri($"wss://{serverIp}:{port}");
+            var uri = new Uri(serverUrl);
             Debug.Log("🔌 Trying to connect to: " + uri);
 
             try

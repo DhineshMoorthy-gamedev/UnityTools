@@ -12,7 +12,7 @@ namespace UnityProductivityTools
         private bool sceneFoldout = true;
         private bool assetsFoldout = true;
 
-        [MenuItem("Tools/GameDevTools/Welcome")]
+        [MenuItem("Tools/GameDevTools/Welcome", false, 100)]
         public static void ShowWindow()
         {
             var window = GetWindow<GameDevToolsWelcomeWindow>("Tools Welcome");

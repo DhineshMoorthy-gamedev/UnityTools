@@ -141,7 +141,7 @@ namespace UnityTools.ObjectComparison
             for (int i = 0; i < compsA.Length; i++)
             {
                 var cA = compsA[i];
-                if(cA is Transform) continue; // Handled separately
+                if (cA == null || cA is Transform) continue; // Handled separately or missing script
 
                 var diff = new ComponentDiff();
                 diff.ComponentName = cA.GetType().Name;
@@ -150,7 +150,7 @@ namespace UnityTools.ObjectComparison
                 int matchIndex = -1;
                 for(int j=0; j<compsB.Length; j++)
                 {
-                    if(!matchedB[j] && compsB[j].GetType() == cA.GetType())
+                    if(!matchedB[j] && compsB[j] != null && compsB[j].GetType() == cA.GetType())
                     {
                         matchIndex = j;
                         break;
@@ -184,7 +184,7 @@ namespace UnityTools.ObjectComparison
                 if (!matchedB[j])
                 {
                     var cB = compsB[j];
-                    if(cB is Transform) continue;
+                    if(cB == null || cB is Transform) continue;
 
                     var diff = new ComponentDiff();
                     diff.ComponentB = cB;
