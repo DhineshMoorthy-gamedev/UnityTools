@@ -1,7 +1,9 @@
 using System.Collections.Generic;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using System.IO;
+using UnityProductivityTools.TaskTool;
 
 namespace UnityProductivityTools.TaskTool.Editor
 {
@@ -264,14 +266,6 @@ namespace UnityProductivityTools.TaskTool.Editor
                 // --- Deep Linking Logic ---
                 EditorGUILayout.LabelField("Linked Objects", EditorStyles.boldLabel);
                 
-                // 1. Migration: Move old single data to new list
-                if ((task.LinkedObject != null || !string.IsNullOrEmpty(task.LinkedGlobalObjectId)) && task.Links.Count == 0)
-                {
-                    task.Links.Add(new TaskLink { Object = task.LinkedObject, GlobalObjectId = task.LinkedGlobalObjectId });
-                    task.LinkedObject = null;
-                    task.LinkedGlobalObjectId = null;
-                    EditorUtility.SetDirty(_taskData);
-                }
 
                 // 2. Draw List
                 for (int i = 0; i < task.Links.Count; i++)
@@ -287,6 +281,26 @@ namespace UnityProductivityTools.TaskTool.Editor
                         if (GlobalObjectId.TryParse(link.GlobalObjectId, out GlobalObjectId id))
                         {
                             currentObject = GlobalObjectId.GlobalObjectIdentifierToObjectSlow(id);
+                            
+                            // AUTO-CAPTURE: If we found it, ensure ScenePath and metadata are up to date
+                            if (currentObject != null)
+                            {
+                                bool changed = false;
+                                if (link.ObjectName != currentObject.name) { link.ObjectName = currentObject.name; changed = true; }
+                                if (link.ObjectType != currentObject.GetType().Name) { link.ObjectType = currentObject.GetType().Name; changed = true; }
+                                
+                                string detectedScene = null;
+                                if (currentObject is GameObject go && go.scene.IsValid()) detectedScene = go.scene.path;
+                                else if (currentObject is Component comp && comp.gameObject.scene.IsValid()) detectedScene = comp.gameObject.scene.path;
+                                
+                                if (!string.IsNullOrEmpty(detectedScene) && link.ScenePath != detectedScene)
+                                {
+                                    link.ScenePath = detectedScene;
+                                    changed = true;
+                                }
+                                
+                                if (changed) EditorUtility.SetDirty(_taskData);
+                            }
                         }
                     }
 
@@ -298,20 +312,48 @@ namespace UnityProductivityTools.TaskTool.Editor
                          {
                              link.Object = null;
                              link.GlobalObjectId = null;
-                             EditorUtility.SetDirty(_taskData);
+                             link.ObjectName = null;
+                             link.ObjectType = null;
+                             link.ScenePath = null;
                          }
-                         else if (AssetDatabase.Contains(newObject)) // Is Project Asset
+                         else
                          {
-                             link.Object = newObject;
-                             link.GlobalObjectId = null; 
-                             EditorUtility.SetDirty(_taskData);
-                         }
-                         else // Is Scene Object
-                         {
-                             link.Object = null; 
+                             link.Object = newObject; 
                              link.GlobalObjectId = GlobalObjectId.GetGlobalObjectIdSlow(newObject).ToString();
-                             EditorUtility.SetDirty(_taskData);
+                             link.ObjectName = newObject.name;
+                             link.ObjectType = newObject.GetType().Name;
+
+                             if (newObject is GameObject go) 
+                                 link.ScenePath = go.scene.path;
+                             else if (newObject is Component comp)
+                                 link.ScenePath = comp.gameObject.scene.path;
+                             else
+                                 link.ScenePath = null;
                          }
+                         EditorUtility.SetDirty(_taskData);
+                    }
+
+                    // --- Cross-Scene Support UI ---
+                    if (currentObject == null && !string.IsNullOrEmpty(link.GlobalObjectId))
+                    {
+                        Color originalGuiColor = GUI.color;
+                        GUI.color = new Color(0.7f, 0.7f, 1f);
+                        
+                        string sceneInfo = !string.IsNullOrEmpty(link.ScenePath) ? $" @ {Path.GetFileNameWithoutExtension(link.ScenePath)}" : "";
+                        GUILayout.Label($"[{link.ObjectName}] ({link.ObjectType}){sceneInfo}", EditorStyles.miniLabel);
+                        
+                        GUI.color = originalGuiColor;
+
+                        if (!string.IsNullOrEmpty(link.ScenePath) && link.ScenePath != UnityEngine.SceneManagement.SceneManager.GetActiveScene().path)
+                        {
+                            if (GUILayout.Button("Go to Scene", EditorStyles.miniButton, GUILayout.Width(80)))
+                            {
+                                if (EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
+                                {
+                                    EditorSceneManager.OpenScene(link.ScenePath);
+                                }
+                            }
+                        }
                     }
 
                     if (GUILayout.Button("X", GUILayout.Width(20)))
@@ -324,8 +366,27 @@ namespace UnityProductivityTools.TaskTool.Editor
                     EditorGUILayout.EndHorizontal();
                 }
 
-                // 3. Add Button
-                if (GUILayout.Button("+ Add Link"))
+                // 3. Add Button + Drop Area
+                Rect dropArea = GUILayoutUtility.GetRect(0.0f, 25.0f, GUILayout.ExpandWidth(true));
+                GUI.Box(dropArea, "Drag & Drop Objects here or Click to Add", EditorStyles.helpBox);
+                
+                if (Event.current.type == EventType.DragUpdated && dropArea.Contains(Event.current.mousePosition))
+                {
+                    DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
+                    Event.current.Use();
+                }
+                
+                if (Event.current.type == EventType.DragPerform && dropArea.Contains(Event.current.mousePosition))
+                {
+                    DragAndDrop.AcceptDrag();
+                    foreach (UnityEngine.Object obj in DragAndDrop.objectReferences)
+                    {
+                        AddLinkFromObject(task, obj);
+                    }
+                    Event.current.Use();
+                }
+
+                if (GUI.Button(dropArea, "", GUIStyle.none)) // Still allow clicking through the box
                 {
                     task.Links.Add(new TaskLink());
                     EditorUtility.SetDirty(_taskData);
@@ -343,6 +404,27 @@ namespace UnityProductivityTools.TaskTool.Editor
             }
 
             EditorGUILayout.EndVertical();
+        }
+
+        private void AddLinkFromObject(TaskItem task, UnityEngine.Object obj)
+        {
+            if (obj == null) return;
+            
+            TaskLink newLink = new TaskLink
+            {
+                Object = obj,
+                ObjectName = obj.name,
+                ObjectType = obj.GetType().Name,
+                GlobalObjectId = GlobalObjectId.GetGlobalObjectIdSlow(obj).ToString()
+            };
+
+            if (obj is GameObject go) 
+                newLink.ScenePath = go.scene.path;
+            else if (obj is Component comp)
+                newLink.ScenePath = comp.gameObject.scene.path;
+            
+            task.Links.Add(newLink);
+            EditorUtility.SetDirty(_taskData);
         }
 
         private Color GetPriorityColor(TaskPriority priority)

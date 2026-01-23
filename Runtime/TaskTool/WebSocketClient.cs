@@ -4,6 +4,7 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.IO;
 using UnityEngine;
 
 namespace UnityProductivityTools.TaskTool
@@ -18,6 +19,9 @@ namespace UnityProductivityTools.TaskTool
         private TaskData _syncedTasks;
         private Vector2 _scrollPos;
 
+        public string currentProjectId = ""; // ID of the linked project
+        private string _tempProjectId = "";
+        
         ClientWebSocket socket;
         CancellationTokenSource cts;
         ConcurrentQueue<string> messageQueue = new();
@@ -29,6 +33,11 @@ namespace UnityProductivityTools.TaskTool
 
         private void OnEnable()
         {
+            if (string.IsNullOrEmpty(currentProjectId))
+                currentProjectId = Application.productName;
+                
+            _tempProjectId = currentProjectId;
+
             if (_syncedTasks == null) _syncedTasks = ScriptableObject.CreateInstance<TaskData>();
             NotifyTaskDataChanged += taskadded;
         }
@@ -125,6 +134,7 @@ namespace UnityProductivityTools.TaskTool
         {
             if (socket == null || socket.State != WebSocketState.Open) return;
 
+            msg.projectId = currentProjectId; // Always attach project ID
             string json = JsonUtility.ToJson(msg);
             byte[] data = Encoding.UTF8.GetBytes(json);
 
@@ -156,6 +166,13 @@ namespace UnityProductivityTools.TaskTool
 
         void OnMessage(WSMessage msg)
         {
+            // Filter by Project ID: Only process if it matches or if it's a global command
+            if (!string.IsNullOrEmpty(msg.projectId) && msg.projectId != currentProjectId)
+            {
+                Debug.Log($"⏭ Ignoring message for project: {msg.projectId} (Current: {currentProjectId})");
+                return;
+            }
+
             Debug.Log($"📩 [{msg.sender}] {msg.type}: {msg.payload}");
 
             if (msg.type == "task_sync")
@@ -207,10 +224,12 @@ namespace UnityProductivityTools.TaskTool
                 GUILayout.BeginHorizontal();
                 GUILayout.Label("Port:", GUILayout.Width(100));
                 string portStr = GUILayout.TextField(port.ToString(), GUILayout.ExpandWidth(true));
-                if (int.TryParse(portStr, out int newPort))
-                {
-                    port = newPort;
-                }
+                if (int.TryParse(portStr, out int newPort)) port = newPort;
+                GUILayout.EndHorizontal();
+                
+                GUILayout.BeginHorizontal();
+                GUILayout.Label("Project ID:", GUILayout.Width(100));
+                currentProjectId = GUILayout.TextField(currentProjectId, GUILayout.ExpandWidth(true));
                 GUILayout.EndHorizontal();
                 
                 GUILayout.Space(5);
@@ -272,6 +291,40 @@ namespace UnityProductivityTools.TaskTool
                     {
                         GUILayout.Label("Description:", GetBoldLabelStyle());
                         GUILayout.Label(task.Description, GUI.skin.textArea);
+                    }
+
+                    GUILayout.Space(2);
+
+                    // Links
+                    if (task.Links != null && task.Links.Count > 0)
+                    {
+                        GUILayout.Label("Links:", GetBoldLabelStyle());
+                        foreach (var link in task.Links)
+                        {
+                            if (string.IsNullOrEmpty(link.ObjectName)) continue;
+
+                            GUILayout.BeginHorizontal();
+                            string linkLabel = $"🔗 {link.ObjectName} ({link.ObjectType})";
+                            if (!string.IsNullOrEmpty(link.ScenePath))
+                            {
+                                string sceneName = Path.GetFileNameWithoutExtension(link.ScenePath);
+                                linkLabel += $" @ {sceneName}";
+                            }
+                            GUILayout.Label(linkLabel, GetMiniLabelStyle());
+                            
+                            if (!string.IsNullOrEmpty(link.GlobalObjectId))
+                            {
+                                if (GUILayout.Button("Ping", GUILayout.Width(50)))
+                                {
+                                    Send(new WSMessage { 
+                                        sender = "mobile", 
+                                        type = "ping_object", 
+                                        payload = link.GlobalObjectId 
+                                    });
+                                }
+                            }
+                            GUILayout.EndHorizontal();
+                        }
                     }
 
                     // Footer: Assignee / Assigner
@@ -450,6 +503,7 @@ namespace UnityProductivityTools.TaskTool
         public string senderId; // Unique session ID
         public string targetId; // ID of the client this message is intended for
         public string type;     // log / command / status
+        public string projectId; // ID of the project
         public string payload;
     }
 }

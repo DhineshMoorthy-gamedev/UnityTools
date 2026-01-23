@@ -18,6 +18,15 @@ namespace UnityProductivityTools.TaskTool.Editor
             if (msg.sender != "mobile" && msg.sender != "editor")
                 return;
 
+            // Filter by Project ID
+            string currentId = string.IsNullOrEmpty(WebSocketEditorListener.CurrentProjectName) ? Application.productName : WebSocketEditorListener.CurrentProjectName;
+            
+            if (!string.IsNullOrEmpty(msg.projectId) && msg.projectId != currentId)
+            {
+                // We ignore messages intended for other projects
+                return;
+            }
+
             switch (msg.type)
             {
                 case "command":
@@ -32,6 +41,10 @@ namespace UnityProductivityTools.TaskTool.Editor
 
                 case "request_sync":
                     SendCurrentTaskList(msg.senderId);
+                    break;
+                
+                case "ping_object":
+                    PingObject(msg.payload);
                     break;
 
                 default:
@@ -129,6 +142,7 @@ namespace UnityProductivityTools.TaskTool.Editor
                     sender = "editor",
                     type = "task_sync",
                     payload = json,
+                    projectId = string.IsNullOrEmpty(WebSocketEditorListener.CurrentProjectName) ? Application.productName : WebSocketEditorListener.CurrentProjectName,
                     targetId = requesterId // Set the target receiver
                 };
                 
@@ -144,11 +158,35 @@ namespace UnityProductivityTools.TaskTool.Editor
 
         static void SyncTasks(string json)
         {
-            Debug.Log("🔄 Syncing Tasks from Mobile...");
+            Debug.Log("🔄 Syncing Tasks...");
             var window = EditorWindow.GetWindow<TaskManagerSyncedWindow>();
             if (window != null)
             {
                 window.UpdateData(json);
+            }
+        }
+
+        static void PingObject(string globalObjectId)
+        {
+            if (string.IsNullOrEmpty(globalObjectId)) return;
+
+            Debug.Log($"🎯 Pinging Object: {globalObjectId}");
+            if (GlobalObjectId.TryParse(globalObjectId, out GlobalObjectId id))
+            {
+                UnityEngine.Object obj = GlobalObjectId.GlobalObjectIdentifierToObjectSlow(id);
+                if (obj != null)
+                {
+                    EditorGUIUtility.PingObject(obj);
+                    Selection.activeObject = obj;
+                }
+                else
+                {
+                    Debug.LogWarning($"⚠ Could not resolve object for ID: {globalObjectId}");
+                }
+            }
+            else
+            {
+                Debug.LogError($"❌ Invalid GlobalObjectId: {globalObjectId}");
             }
         }
     }

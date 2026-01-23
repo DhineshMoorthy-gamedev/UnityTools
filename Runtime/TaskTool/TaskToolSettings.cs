@@ -12,6 +12,8 @@ namespace UnityProductivityTools.TaskTool
         [Tooltip("The port of the WebSocket server")]
         public int ServerPort;/* = 8080;*/
 
+        public string ProjectName;
+
         public TaskToolEnvironment Environment = TaskToolEnvironment.Local;
     }
 

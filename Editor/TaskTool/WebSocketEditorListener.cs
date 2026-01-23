@@ -24,6 +24,7 @@ namespace UnityProductivityTools.TaskTool.Editor
         static string serverUrl = "wss://node-server-ws.onrender.com";
         static bool connected = false;
         static string sessionId = Guid.NewGuid().ToString(); // Unique ID for this editor session
+        public static string CurrentProjectName = ""; // Project identifier
 
         public static bool IsConnected => connected && socket != null && socket.State == WebSocketState.Open;
         public static string SocketStatus => socket == null ? "NULL" : socket.State.ToString();
@@ -110,6 +111,15 @@ namespace UnityProductivityTools.TaskTool.Editor
 
                 connected = true;
                 Debug.Log("✅ [WS] Editor WebSocket CONNECTED");
+                
+                // Send Identity Handshake
+                Send(new WSMessage { 
+                    sender = "editor", 
+                    type = "identity", 
+                    payload = "Unity Editor Connected",
+                    projectId = string.IsNullOrEmpty(CurrentProjectName) ? Application.productName : CurrentProjectName
+                });
+
                 OnConnected?.Invoke();
                 _ = ReceiveLoop();
             }
@@ -169,6 +179,7 @@ namespace UnityProductivityTools.TaskTool.Editor
             try
             {
                 msg.senderId = sessionId; // Attach our unique ID
+                msg.projectId = string.IsNullOrEmpty(CurrentProjectName) ? Application.productName : CurrentProjectName;
                 string json = JsonUtility.ToJson(msg);
                 byte[] data = Encoding.UTF8.GetBytes(json);
 
@@ -222,6 +233,7 @@ namespace UnityProductivityTools.TaskTool.Editor
                     serverIp = settings.ServerIP;
                     port = settings.ServerPort;
                     TaskToolEnvironment = settings.Environment;
+                    CurrentProjectName = settings.ProjectName;
                     // Debug.Log($"⚙ [WS] Loaded Settings: {serverIp}:{port}");
                 }
             }

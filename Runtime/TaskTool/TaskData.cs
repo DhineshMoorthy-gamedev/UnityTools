@@ -21,6 +21,16 @@ namespace UnityProductivityTools.TaskTool
     }
 
     [Serializable]
+    public class TaskLink
+    {
+        public UnityEngine.Object Object;
+        public string GlobalObjectId;
+        public string ObjectName;
+        public string ObjectType;
+        public string ScenePath;
+    }
+
+    [Serializable]
     public class TaskItem
     {
         public string Title;
@@ -32,6 +42,8 @@ namespace UnityProductivityTools.TaskTool
         public string Assigner;
         public bool IsExpanded = true;
         
+        public List<TaskLink> Links = new List<TaskLink>();
+
         public string CreatedDate;
         
         public TaskItem()
