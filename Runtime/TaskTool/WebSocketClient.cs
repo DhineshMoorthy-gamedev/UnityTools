@@ -448,6 +448,7 @@ namespace UnityProductivityTools.TaskTool
     {
         public string sender;   // editor / mobile
         public string senderId; // Unique session ID
+        public string targetId; // ID of the client this message is intended for
         public string type;     // log / command / status
         public string payload;
     }

@@ -31,7 +31,7 @@ namespace UnityProductivityTools.TaskTool.Editor
                     break;
 
                 case "request_sync":
-                    SendCurrentTaskList();
+                    SendCurrentTaskList(msg.senderId);
                     break;
 
                 default:
@@ -103,9 +103,9 @@ namespace UnityProductivityTools.TaskTool.Editor
             EditorApplication.isPlaying = false;
         }
 
-        static void SendCurrentTaskList()
+        static void SendCurrentTaskList(string requesterId)
         {
-            Debug.Log("📤 Mobile client requested initial task sync");
+            Debug.Log($"📤 client {requesterId} requested initial task sync");
             
             // Load the current TaskData
             var taskData = UnityEngine.Resources.Load<TaskData>("TaskData");
@@ -128,12 +128,13 @@ namespace UnityProductivityTools.TaskTool.Editor
                 {
                     sender = "editor",
                     type = "task_sync",
-                    payload = json
+                    payload = json,
+                    targetId = requesterId // Set the target receiver
                 };
                 
                 WebSocketEditorListener.Send(msg);
                 int taskCount = taskData.Tasks != null ? taskData.Tasks.Count : 0;
-                Debug.Log($"✅ Sent {taskCount} tasks to mobile client");
+                Debug.Log($"✅ Sent {taskCount} tasks to client {requesterId}");
             }
             else
             {

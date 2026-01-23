@@ -7,9 +7,18 @@ namespace UnityProductivityTools.TaskTool
     {
         [Header("Server Configuration")]
         [Tooltip("The IP address of the WebSocket server (e.g., 127.0.0.1 for local, or LAN IP for mobile)")]
-        public string ServerIP = "127.0.0.1";
+        public string ServerIP;/* = "127.0.0.1";*/
 
         [Tooltip("The port of the WebSocket server")]
-        public int ServerPort = 8080;
+        public int ServerPort;/* = 8080;*/
+
+        public TaskToolEnvironment Environment = TaskToolEnvironment.Local;
+    }
+
+    [System.Serializable]
+    public enum TaskToolEnvironment
+    {
+        Local,
+        Remote
     }
 }

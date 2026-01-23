@@ -20,6 +20,7 @@ namespace UnityProductivityTools.TaskTool.Editor
 
         static string serverIp = "127.0.0.1";
         static int port = 8080;
+        static TaskToolEnvironment TaskToolEnvironment = TaskToolEnvironment.Local;
         static string serverUrl = "wss://node-server-ws.onrender.com";
         static bool connected = false;
         static string sessionId = Guid.NewGuid().ToString(); // Unique ID for this editor session
@@ -83,8 +84,19 @@ namespace UnityProductivityTools.TaskTool.Editor
             cts = new CancellationTokenSource();
 
             LoadSettings(); // Reload settings before connecting
-            //var uri = new Uri($"wss://{serverIp}:{port}");
-            var uri = new Uri(serverUrl);
+            var uri = default(Uri);
+            if (TaskToolEnvironment == TaskToolEnvironment.Remote)
+            {
+                serverUrl = "wss://node-server-ws.onrender.com";
+                uri = new Uri(serverUrl);
+            }
+            else
+            {
+                //serverUrl = $"ws://{serverIp}:{port}";
+                uri = new Uri($"ws://{serverIp}:{port}");
+            }
+            //var uri = new Uri($"ws://{serverIp}:{port}");
+            //var uri = new Uri(serverUrl);
 
             Debug.Log($"🔌 [WS] Attempting bridge to {uri} (Current State: {SocketStatus})");
 
@@ -209,6 +221,7 @@ namespace UnityProductivityTools.TaskTool.Editor
                 {
                     serverIp = settings.ServerIP;
                     port = settings.ServerPort;
+                    TaskToolEnvironment = settings.Environment;
                     // Debug.Log($"⚙ [WS] Loaded Settings: {serverIp}:{port}");
                 }
             }
