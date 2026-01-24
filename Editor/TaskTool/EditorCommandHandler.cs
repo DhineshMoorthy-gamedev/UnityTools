@@ -8,6 +8,7 @@ using UnityProductivityTools.TaskTool;
 
 #if UNITY_EDITOR
 using UnityEditor;
+using UnityEditor.SceneManagement;
 
 namespace UnityProductivityTools.TaskTool.Editor
 {
@@ -44,7 +45,7 @@ namespace UnityProductivityTools.TaskTool.Editor
                     break;
                 
                 case "ping_object":
-                    PingObject(msg.payload);
+                    PingObject(msg.payload, msg.scenePath);
                     break;
 
                 default:
@@ -166,11 +167,26 @@ namespace UnityProductivityTools.TaskTool.Editor
             }
         }
 
-        static void PingObject(string globalObjectId)
+        static void PingObject(string globalObjectId, string scenePath = null)
         {
             if (string.IsNullOrEmpty(globalObjectId)) return;
 
-            Debug.Log($"🎯 Pinging Object: {globalObjectId}");
+            Debug.Log($"🎯 Pinging Object: {globalObjectId} in scene: {scenePath}");
+
+            // Handle cross-scene pinging
+            if (!string.IsNullOrEmpty(scenePath) && scenePath != UnityEngine.SceneManagement.SceneManager.GetActiveScene().path)
+            {
+                if (EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
+                {
+                    EditorSceneManager.OpenScene(scenePath);
+                }
+                else
+                {
+                    Debug.LogWarning("❌ Scene open cancelled by user. Cannot ping object.");
+                    return;
+                }
+            }
+
             if (GlobalObjectId.TryParse(globalObjectId, out GlobalObjectId id))
             {
                 UnityEngine.Object obj = GlobalObjectId.GlobalObjectIdentifierToObjectSlow(id);

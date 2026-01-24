@@ -12,7 +12,7 @@ namespace UnityProductivityTools
         private bool sceneFoldout = true;
         private bool assetsFoldout = true;
 
-        [MenuItem("Tools/GameDevTools/Welcome", false, 100)]
+        [MenuItem("Tools/GameDevTools/Welcome", false, 1000)]
         public static void ShowWindow()
         {
             var window = GetWindow<GameDevToolsWelcomeWindow>("Tools Welcome");
@@ -121,7 +121,7 @@ namespace UnityProductivityTools
 
                 DrawToolItem(
                     "3.1 Advanced Inspector",
-                    "Enhanced inspector with favorites, search, component presets, bulk editing, and built-in script editor with inline and maximized modes.",
+                    "Enhanced inspector with favorites, search, bulk editing, and built-in script editor with inline and maximized modes.",
                     "Tools/GameDevTools/Advanced Inspector"
                 );
 
@@ -150,9 +150,21 @@ namespace UnityProductivityTools
                 );
 
                 DrawToolItem(
-                    "3.6 Quick Prefab Creator", 
+                    "3.6 Code Editor",
+                    "Standalone script editor with a searchable file browser, syntax highlighting, and Find/Replace support. Edit scripts without leaving Unity.",
+                    "Tools/GameDevTools/Code Editor"
+                );
+
+                DrawToolItem(
+                    "3.7 Quick Prefab Creator", 
                     "Create prefabs instantly from GameObjects. (Right-click > Prefab > Make Prefab)",
                     null // Passive tool / Context Menu
+                );
+
+                DrawToolItem(
+                    "3.8 GSheet Data Viewer",
+                    "View and edit Google Sheets data in Unity. Features dropdown support, real-time sync, and Service Account authentication.",
+                    "Tools/GameDevTools/GSheet Data Viewer"
                 );
 
                 EditorGUI.indentLevel--;

@@ -85,7 +85,14 @@ A comprehensive collection of Unity Editor tools designed to enhance productivit
     - **Note Component**: Add documentation and comments directly to your GameObjects. Visible in the Scene view with customizable icons and colors.
     - **Centralized View**: A centralized window (`Tools > GameDevTools > Note Dashboard`) to view, search, and manage all notes in your scene.
 
-- **3.6 Quick Prefab Creator**: Create prefabs from selected objects instantly. (Right-click > Prefab > Make Prefab)
+- **3.7 Quick Prefab Creator**: Create prefabs from selected objects instantly. (Right-click > Prefab > Make Prefab)
+
+- **3.8 GSheet Data Viewer**:
+    - **Real-Time Sync**: View and edit Google Sheets data directly in Unity with automatic syncing.
+    - **Dropdown Support**: Cells with data validation render as native Unity dropdowns.
+    - **Service Account Auth**: Secure write access using Google Service Account credentials.
+    - **Debounced Updates**: Smart batching prevents API rate limits while maintaining responsiveness.
+    - **Access**: `Tools > GameDevTools > GSheet Data Viewer`
 
 
 ### 🛠 Toolbar Extender (Core Feature)

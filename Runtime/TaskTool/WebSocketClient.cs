@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
 using System.Text;
@@ -11,6 +12,12 @@ namespace UnityProductivityTools.TaskTool
 {
     public class WebSocketClient : MonoBehaviour
     {
+        public enum environment
+        {
+            Local,
+            Remote
+        }
+        public environment env;
         public TaskToolSettings settings; // Optional: Link the settings asset
         public string serverIp = "192.168.1.100"; // LAN IP
         public int port = 8080;
@@ -20,7 +27,9 @@ namespace UnityProductivityTools.TaskTool
         private Vector2 _scrollPos;
 
         public string currentProjectId = ""; // ID of the linked project
-        private string _tempProjectId = "";
+        private HashSet<string> _discoveredProjectIds = new();
+        private Vector2 _projectsScrollPos;
+        private bool _showProjectSelector = false;
         
         ClientWebSocket socket;
         CancellationTokenSource cts;
@@ -35,8 +44,6 @@ namespace UnityProductivityTools.TaskTool
         {
             if (string.IsNullOrEmpty(currentProjectId))
                 currentProjectId = Application.productName;
-                
-            _tempProjectId = currentProjectId;
 
             if (_syncedTasks == null) _syncedTasks = ScriptableObject.CreateInstance<TaskData>();
             NotifyTaskDataChanged += taskadded;
@@ -64,8 +71,19 @@ namespace UnityProductivityTools.TaskTool
                 port = settings.ServerPort;
             }
 
+            var uri  = new Uri(serverUrl);
+            if (env == environment.Remote)
+            {
+                //serverUrl = "wss://node-server-ws.onrender.com";
+                uri = new Uri(serverUrl);
+            }
+            else
+            {
+                //serverUrl = $"ws://{serverIp}:{port}";
+                uri = new Uri($"ws://{serverIp}:{port}");
+            }
             //var uri = new Uri($"wss://{serverIp}:{port}");
-            var uri = new Uri(serverUrl);
+            //var uri = new Uri(serverUrl);
             Debug.Log("🔌 Trying to connect to: " + uri);
 
             try
@@ -166,14 +184,22 @@ namespace UnityProductivityTools.TaskTool
 
         void OnMessage(WSMessage msg)
         {
+            // Project Discovery: Track any project IDs we see (from anyone)
+            if (!string.IsNullOrEmpty(msg.projectId))
+            {
+                if (!_discoveredProjectIds.Contains(msg.projectId))
+                {
+                    _discoveredProjectIds.Add(msg.projectId);
+                    Debug.Log($"✨ Discovered new Project ID: {msg.projectId}");
+                }
+            }
+
             // Filter by Project ID: Only process if it matches or if it's a global command
             if (!string.IsNullOrEmpty(msg.projectId) && msg.projectId != currentProjectId)
             {
-                Debug.Log($"⏭ Ignoring message for project: {msg.projectId} (Current: {currentProjectId})");
+                // Debug.Log($"⏭ Ignoring message for project: {msg.projectId} (Current: {currentProjectId})");
                 return;
             }
-
-            Debug.Log($"📩 [{msg.sender}] {msg.type}: {msg.payload}");
 
             if (msg.type == "task_sync")
             {
@@ -214,49 +240,90 @@ namespace UnityProductivityTools.TaskTool
 
             if (socket == null || socket.State != WebSocketState.Open)
             {
-                GUILayout.Label("Server Configuration:", GetBoldLabelStyle());
-                
-                GUILayout.BeginHorizontal();
-                GUILayout.Label("IP Address:", GUILayout.Width(100));
-                serverIp = GUILayout.TextField(serverIp, GUILayout.ExpandWidth(true));
-                GUILayout.EndHorizontal();
-                
-                GUILayout.BeginHorizontal();
-                GUILayout.Label("Port:", GUILayout.Width(100));
-                string portStr = GUILayout.TextField(port.ToString(), GUILayout.ExpandWidth(true));
-                if (int.TryParse(portStr, out int newPort)) port = newPort;
-                GUILayout.EndHorizontal();
-                
-                GUILayout.BeginHorizontal();
-                GUILayout.Label("Project ID:", GUILayout.Width(100));
-                currentProjectId = GUILayout.TextField(currentProjectId, GUILayout.ExpandWidth(true));
-                GUILayout.EndHorizontal();
-                
-                GUILayout.Space(5);
-                
-                GUI.backgroundColor = Color.red;
-                if (GUILayout.Button("Connect to Server", GUILayout.Height(50)))
-                {
-                    connectui();
-                }
-                GUI.backgroundColor = Color.white;
+                DrawConnectionScreen();
             }
             else
             {
-                GUI.backgroundColor = Color.green;
-                GUILayout.Label($"✅ Connected to {serverIp}:{port}", GUILayout.ExpandWidth(false));
-                GUI.backgroundColor = Color.white;
-                
-                if (GUILayout.Button("Disconnect", GUILayout.Height(40)))
+                DrawSyncedTasksScreen();
+            }
+
+            GUILayout.EndArea();
+        }
+
+        private void DrawConnectionScreen()
+        {
+            GUILayout.Label("Server Configuration:", GetBoldLabelStyle());
+            
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("IP:", GUILayout.Width(40));
+            serverIp = GUILayout.TextField(serverIp, GUILayout.ExpandHeight(true));
+            GUILayout.EndHorizontal();
+            
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Port:", GUILayout.Width(40));
+            string portStr = GUILayout.TextField(port.ToString(), GUILayout.ExpandHeight(true));
+            if (int.TryParse(portStr, out int newPort)) port = newPort;
+            GUILayout.EndHorizontal();
+            
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("Project:", GUILayout.Width(60));
+            currentProjectId = GUILayout.TextField(currentProjectId, GUILayout.ExpandHeight(true));
+            if (GUILayout.Button("▼", GUILayout.Width(30))) _showProjectSelector = !_showProjectSelector;
+            GUILayout.EndHorizontal();
+
+            if (_showProjectSelector && _discoveredProjectIds.Count > 0)
+            {
+                _projectsScrollPos = GUILayout.BeginScrollView(_projectsScrollPos, "box", GUILayout.Height(100));
+                foreach (var id in _discoveredProjectIds)
                 {
-                    _ = socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "User disconnect", CancellationToken.None);
+                    if (GUILayout.Button(id, GUI.skin.button))
+                    {
+                        currentProjectId = id;
+                        _showProjectSelector = false;
+                    }
                 }
-                
-                if (GUILayout.Button("Ping Editor", GUILayout.Height(40)))
+                GUILayout.EndScrollView();
+            }
+            
+            GUILayout.Space(10);
+            
+            GUI.backgroundColor = new Color(0.2f, 0.8f, 0.2f);
+            if (GUILayout.Button("Connect to Server", GUILayout.Height(60)))
+            {
+                connectui();
+            }
+            GUI.backgroundColor = Color.white;
+        }
+
+        private void DrawSyncedTasksScreen()
+        {
+            GUILayout.BeginHorizontal();
+            GUI.backgroundColor = Color.green;
+            GUILayout.Label($"● Connected: {currentProjectId}", GetMiniLabelStyle(), GUILayout.ExpandWidth(true));
+            GUI.backgroundColor = Color.white;
+            
+            if (GUILayout.Button("X", GUILayout.Width(30)))
+            {
+                _ = socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "User disconnect", CancellationToken.None);
+            }
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button("Manual Sync", GUILayout.Height(30)))
+            {
+                Send(new WSMessage { sender = "mobile", type = "request_sync", payload = "Manual sync" });
+            }
+            if (GUILayout.Button("Clear Data", GUILayout.Height(30)))
+            {
+                if (_syncedTasks != null) 
                 {
-                    Send(new WSMessage { sender = "mobile", type = "status", payload = "Ping from Mobile" });
+                    _syncedTasks.Tasks.Clear();
+                    NotifyTaskDataChanged?.Invoke();
                 }
             }
+            GUILayout.EndHorizontal();
+
+            GUILayout.Space(5);
 
             GUILayout.Space(10);
 
@@ -298,32 +365,38 @@ namespace UnityProductivityTools.TaskTool
                     // Links
                     if (task.Links != null && task.Links.Count > 0)
                     {
-                        GUILayout.Label("Links:", GetBoldLabelStyle());
+                        GUILayout.Space(5);
                         foreach (var link in task.Links)
                         {
                             if (string.IsNullOrEmpty(link.ObjectName)) continue;
 
+                            GUI.backgroundColor = new Color(0.9f, 0.9f, 1f);
+                            GUILayout.BeginVertical(GetHelpBoxStyle());
+                            GUI.backgroundColor = Color.white;
+                            
                             GUILayout.BeginHorizontal();
-                            string linkLabel = $"🔗 {link.ObjectName} ({link.ObjectType})";
+                            string linkLabel = $"<b>{link.ObjectName}</b>\n<size=9>{link.ObjectType}</size>";
                             if (!string.IsNullOrEmpty(link.ScenePath))
                             {
                                 string sceneName = Path.GetFileNameWithoutExtension(link.ScenePath);
-                                linkLabel += $" @ {sceneName}";
+                                linkLabel += $" <color=#77aaff>@ {sceneName}</color>";
                             }
-                            GUILayout.Label(linkLabel, GetMiniLabelStyle());
+                            GUILayout.Label(linkLabel, GetRichTextStyle(), GUILayout.ExpandWidth(true));
                             
                             if (!string.IsNullOrEmpty(link.GlobalObjectId))
                             {
-                                if (GUILayout.Button("Ping", GUILayout.Width(50)))
+                                if (GUILayout.Button("PING", GUILayout.Width(60), GUILayout.Height(35)))
                                 {
                                     Send(new WSMessage { 
                                         sender = "mobile", 
                                         type = "ping_object", 
-                                        payload = link.GlobalObjectId 
+                                        payload = link.GlobalObjectId,
+                                        scenePath = link.ScenePath
                                     });
                                 }
                             }
                             GUILayout.EndHorizontal();
+                            GUILayout.EndVertical();
                         }
                     }
 
@@ -345,8 +418,6 @@ namespace UnityProductivityTools.TaskTool
 
                 GUILayout.EndScrollView();
             }
-
-            GUILayout.EndArea();
         }
 
         private Color GetPriorityColor(TaskPriority priority)
@@ -380,6 +451,18 @@ namespace UnityProductivityTools.TaskTool
         {
             GUIStyle style = new GUIStyle(GUI.skin.label);
             style.fontStyle = FontStyle.Bold;
+            return style;
+        }
+
+        private GUIStyle GetHelpBoxStyle()
+        {
+            GUIStyle style = GUI.skin.FindStyle("helpbox");
+            if (style == null)
+            {
+                // Fallback for runtime
+                style = new GUIStyle(GUI.skin.box);
+                style.padding = new RectOffset(10, 10, 5, 5);
+            }
             return style;
         }
 
@@ -504,6 +587,7 @@ namespace UnityProductivityTools.TaskTool
         public string targetId; // ID of the client this message is intended for
         public string type;     // log / command / status
         public string projectId; // ID of the project
+        public string scenePath; // Path of the scene if applicable
         public string payload;
     }
 }

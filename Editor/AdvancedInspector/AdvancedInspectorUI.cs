@@ -6,6 +6,7 @@ using System.Linq;
 using System.IO;
 using System.Text.RegularExpressions;
 using Object = UnityEngine.Object;
+using UnityProductivityTools.CodeEditor;
 
 namespace UnityProductivityTools.AdvancedInspector
 {
@@ -454,17 +455,12 @@ namespace UnityProductivityTools.AdvancedInspector
                 
                 GUILayout.FlexibleSpace();
                 
-                float buttonGroupWidth = (comp is MonoBehaviour) ? 90 : 60;
+                float buttonGroupWidth = (comp is MonoBehaviour) ? 65 : 35;
                 EditorGUILayout.BeginHorizontal(GUILayout.Width(buttonGroupWidth));
                 
                 if (GUILayout.Button("F", GUILayout.Width(25))) 
                 {
                     ShowPropertyFavoriteMenu(comp);
-                }
-
-                if (GUILayout.Button("P", GUILayout.Width(25)))
-                {
-                    ShowPresetMenu(comp);
                 }
 
                 if (comp is MonoBehaviour)
@@ -573,28 +569,6 @@ namespace UnityProductivityTools.AdvancedInspector
             }
         }
 
-        private void ShowPresetMenu(Component component)
-        {
-            GenericMenu menu = new GenericMenu();
-            menu.AddItem(new GUIContent("Save as Preset"), false, () => ComponentPresetManager.SavePreset(component));
-            menu.AddSeparator("");
-
-            string[] presets = ComponentPresetManager.GetPresetsForComponent(component.GetType().Name);
-            if (presets.Length == 0)
-            {
-                menu.AddDisabledItem(new GUIContent("No presets found"));
-            }
-            else
-            {
-                foreach (string presetPath in presets)
-                {
-                    string fileName = System.IO.Path.GetFileNameWithoutExtension(presetPath);
-                    menu.AddItem(new GUIContent($"Apply/{fileName}"), false, () => ComponentPresetManager.ApplyPreset(component, presetPath));
-                }
-            }
-
-            menu.ShowAsContext();
-        }
 
         private void DrawFavoriteProperty(SerializedObject so, string path, string compName)
         {
@@ -681,7 +655,8 @@ namespace UnityProductivityTools.AdvancedInspector
             
             if (GUILayout.Button("Maximize", EditorStyles.miniButton))
             {
-                ScriptEditorWindow.ShowWindow(comp, scriptEditors[index]);
+                MonoScript script = MonoScript.FromMonoBehaviour(comp as MonoBehaviour);
+                if (script != null) StandaloneCodeEditor.OpenScript(script);
             }
             EditorGUILayout.EndHorizontal();
 

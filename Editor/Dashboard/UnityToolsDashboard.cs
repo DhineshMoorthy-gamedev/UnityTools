@@ -26,6 +26,8 @@ namespace UnityProductivityTools.Dashboard
         private UnityProductivityTools.SnapshotTool.SnapshotUI snapshotUI;
         private UnityProductivityTools.AdvancedInspector.AdvancedInspectorUI inspectorUI;
         private UnityProductivityTools.TaskTool.Editor.TaskManagerSyncedUI taskManagerSyncedUI;
+        private UnityProductivityTools.CodeEditor.CodeEditorUI codeEditorUI;
+        private UnityProductivityTools.GoogleSheet.Editor.GSheetDataViewerUI gsheetUI;
         private DashboardWelcomeUI welcomeUI;
 
         [MenuItem("Tools/GameDevTools/Unified Dashboard", false, 0)]
@@ -137,6 +139,20 @@ namespace UnityProductivityTools.Dashboard
                 welcomeUI = new DashboardWelcomeUI();
             }
 
+            // Initialize Code Editor
+            if (codeEditorUI == null)
+            {
+                codeEditorUI = new UnityProductivityTools.CodeEditor.CodeEditorUI();
+                codeEditorUI.Initialize();
+            }
+
+            // Initialize GSheet Data Viewer
+            if (gsheetUI == null)
+            {
+                gsheetUI = new UnityProductivityTools.GoogleSheet.Editor.GSheetDataViewerUI();
+                gsheetUI.Initialize();
+            }
+
             // Define tools map
             tools = new Dictionary<string, System.Action>
             {
@@ -154,6 +170,8 @@ namespace UnityProductivityTools.Dashboard
                 { "Object Grouper", DrawObjectGrouper },
                 { "Snapshot Manager", DrawSnapshotTool },
                 { "Advanced Inspector", DrawAdvancedInspector },
+                { "Code Editor", DrawCodeEditor },
+                { "GSheet Data Viewer", DrawGSheetDataViewer },
             };
 
             toolOrder = new List<string>(tools.Keys);
@@ -164,6 +182,11 @@ namespace UnityProductivityTools.Dashboard
             // Propagate focus events if needed
             if (selectedTool == "Feature Aggregator") featureAggregatorUI?.OnFocus();
             if (selectedTool == "Note Dashboard") noteUI?.OnFocus();
+        }
+
+        private void OnDisable()
+        {
+            gsheetUI?.OnDisable();
         }
 
         private void OnSelectionChange()
@@ -354,6 +377,18 @@ namespace UnityProductivityTools.Dashboard
         {
             if (welcomeUI == null) InitializeTools();
             welcomeUI.Draw();
+        }
+
+        private void DrawCodeEditor()
+        {
+            if (codeEditorUI == null) InitializeTools();
+            codeEditorUI.Draw();
+        }
+
+        private void DrawGSheetDataViewer()
+        {
+            if (gsheetUI == null) InitializeTools();
+            gsheetUI.Draw();
         }
 
     }
