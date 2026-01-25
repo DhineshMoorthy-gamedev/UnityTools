@@ -52,9 +52,19 @@ namespace UnityProductivityTools.TaskTool
         }
     }
 
+    [Serializable]
+    public class ClientInfo
+    {
+        public string SenderId;
+        public string Name;
+        public string Platform;
+        public string LastSeen;
+    }
+
     [CreateAssetMenu(fileName = "TaskData", menuName = "TaskTool/TaskData")]
     public class TaskData : ScriptableObject
     {
         public List<TaskItem> Tasks = new List<TaskItem>();
+        public List<ClientInfo> ActiveClients = new List<ClientInfo>();
     }
 }

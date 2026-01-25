@@ -16,7 +16,7 @@ namespace UnityProductivityTools.TaskTool.Editor
     {
         public static void Handle(WSMessage msg)
         {
-            if (msg.sender != "mobile" && msg.sender != "editor")
+            if (msg.sender != "mobile" && msg.sender != "editor" && msg.sender != "server")
                 return;
 
             // Filter by Project ID
@@ -24,12 +24,15 @@ namespace UnityProductivityTools.TaskTool.Editor
             
             if (!string.IsNullOrEmpty(msg.projectId) && msg.projectId != currentId)
             {
-                // We ignore messages intended for other projects
                 return;
             }
 
             switch (msg.type)
             {
+                case "identity":
+                    RegisterClient(msg);
+                    break;
+                
                 case "command":
                     if (msg.payload == "Start Build") StartBuild();
                     else if (msg.payload == "Play Mode On") EnterPlayMode();
@@ -47,9 +50,31 @@ namespace UnityProductivityTools.TaskTool.Editor
                 case "ping_object":
                     PingObject(msg.payload, msg.scenePath);
                     break;
+                
+                case "clear_presence":
+                    ClearPresence();
+                    break;
+
+                case "presence_sync":
+                    HandlePresenceSync(msg.payload);
+                    break;
+                
+                case "member_join":
+                    RegisterClient(msg);
+                    var win = EditorWindow.GetWindow<TaskManagerSyncedWindow>();
+                    if (win != null) win.ShowNotification(new GUIContent($"Client Joined: {msg.payload}"));
+                    break;
+
+                case "member_leave":
+                    RemoveActiveClient(msg.senderId);
+                    break;
 
                 default:
-                    Debug.LogWarning("❓ Unknown message type: " + msg.type);
+                    // Only register on heartbeat/log etc, NOT on sync messages
+                    if (msg.type != "task_sync" && msg.type != "presence_sync")
+                    {
+                        RegisterClient(msg);
+                    }
                     break;
             }
         }
@@ -203,6 +228,206 @@ namespace UnityProductivityTools.TaskTool.Editor
             else
             {
                 Debug.LogError($"❌ Invalid GlobalObjectId: {globalObjectId}");
+            }
+        }
+
+        static void RegisterClient(WSMessage msg, bool shouldBroadcast = true)
+        {
+            if (string.IsNullOrEmpty(msg.senderId) || msg.sender == "editor" || msg.type == "task_sync") return;
+
+            var taskData = UnityEngine.Resources.Load<TaskData>("TaskData");
+            if (taskData == null) return;
+
+            bool structuralChange = false;
+            
+            // Match by exact SenderId OR by the short ID suffix in the name (for migration/cleanup)
+            var existing = taskData.ActiveClients.Find(c => c.SenderId == msg.senderId || 
+                         (!string.IsNullOrEmpty(c.Name) && c.Name.Contains(msg.senderId.Substring(0, Mathf.Min(4, msg.senderId.Length)))));
+            
+            string deviceShortId = msg.senderId.Length > 4 ? msg.senderId.Substring(0, 4) : msg.senderId;
+            string baseName = $"Client {deviceShortId}";
+            
+            if (msg.type == "member_join" && !string.IsNullOrEmpty(msg.payload)) baseName = msg.payload;
+            else if (msg.type == "identity" && !string.IsNullOrEmpty(msg.payload)) baseName = msg.payload;
+
+            string platform = !string.IsNullOrEmpty(msg.platform) ? msg.platform : "Web";
+            if (platform.ToLower() == "unknown") platform = "Web";
+
+            if (existing == null)
+            {
+                taskData.ActiveClients.RemoveAll(c => c.Name == baseName || (c.SenderId != null && c.SenderId.Contains(deviceShortId)));
+                
+                taskData.ActiveClients.Add(new ClientInfo
+                {
+                    SenderId = msg.senderId,
+                    Name = baseName,
+                    Platform = platform,
+                    LastSeen = DateTime.Now.ToString("HH:mm:ss")
+                });
+                structuralChange = true;
+            }
+            else
+            {
+                if (existing.Name != baseName || existing.Platform != platform) structuralChange = true;
+                
+                existing.SenderId = msg.senderId;
+                existing.Name = baseName;
+                existing.Platform = platform;
+                existing.LastSeen = DateTime.Now.ToString("HH:mm:ss");
+            }
+
+            if (structuralChange)
+            {
+                EditorUtility.SetDirty(taskData);
+                if (shouldBroadcast) BroadcastClientList(taskData);
+                TaskManagerSyncedWindow.OnDataChanged?.Invoke();
+            }
+        }
+
+        public static void BroadcastClientList(TaskData taskData)
+        {
+            if (taskData == null) return;
+            string json = JsonUtility.ToJson(taskData);
+            WSMessage syncMsg = new WSMessage
+            {
+                sender = "editor",
+                type = "task_sync",
+                payload = json
+            };
+            WebSocketEditorListener.Send(syncMsg);
+        }
+
+        public static void ClearPresence()
+        {
+            var taskData = UnityEngine.Resources.Load<TaskData>("TaskData");
+            if (taskData == null) return;
+
+            Debug.Log("🧹 Clearing presence list (Editor is the host)...");
+            taskData.ActiveClients.Clear();
+            
+            EditorUtility.SetDirty(taskData);
+            AssetDatabase.SaveAssets();
+            TaskManagerSyncedWindow.OnDataChanged?.Invoke();
+        }
+
+        private static void HandlePresenceSync(string json)
+        {
+            if (string.IsNullOrEmpty(json)) return;
+
+            try
+            {
+                // The server sends a JSON array of member objects
+                // Wrap it in a container for JsonUtility or use a simple hack
+                // Actually, let's just parse it manually or via a wrapper
+                string wrappedJson = "{\"items\":" + json + "}";
+                PresenceSyncWrapper wrapper = JsonUtility.FromJson<PresenceSyncWrapper>(wrappedJson);
+
+                if (wrapper != null && wrapper.items != null)
+                {
+                    var taskData = UnityEngine.Resources.Load<TaskData>("TaskData");
+                    if (taskData == null) return;
+
+                    foreach (var member in wrapper.items)
+                    {
+                        // Use RegisterClient for each member to handle logic consistently
+                        WSMessage memberMsg = new WSMessage
+                        {
+                            type = "identity",
+                            sender = member.sender,
+                            senderId = member.senderId,
+                            payload = member.name,
+                            platform = member.platform
+                        };
+                        RegisterClient(memberMsg, false);
+                    }
+                    
+                    Debug.Log($"👥 [WS] Successfully synced {wrapper.items.Length} existing members from server.");
+                    
+                    // One single broadcast and save after bulk registration
+                    EditorUtility.SetDirty(taskData);
+                    AssetDatabase.SaveAssets(); // Doing it once here is fine
+                    BroadcastClientList(taskData);
+                    TaskManagerSyncedWindow.OnDataChanged?.Invoke();
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning("❌ Failed to parse presence sync: " + e.Message);
+            }
+        }
+
+        [Serializable]
+        private class PresenceSyncWrapper
+        {
+            public PresenceMember[] items;
+        }
+
+        [Serializable]
+        private class PresenceMember
+        {
+            public string senderId;
+            public string name;
+            public string platform;
+            public string sender;
+        }
+
+        static void RemoveActiveClient(string senderId)
+        {
+            var taskData = UnityEngine.Resources.Load<TaskData>("TaskData");
+            if (taskData == null) return;
+
+            int removed = taskData.ActiveClients.RemoveAll(c => c.SenderId == senderId);
+            Debug.Log($"[DEBUG] RemoveActiveClient called for {senderId}. Removed count: {removed}");
+            
+            if (removed > 0)
+            {
+                EditorUtility.SetDirty(taskData);
+                AssetDatabase.SaveAssets();
+                BroadcastClientList(taskData);
+                
+                int listenerCount = TaskManagerSyncedWindow.OnDataChanged?.GetInvocationList().Length ?? 0;
+                Debug.Log($"[DEBUG] Triggering UI Refresh. Event listeners: {listenerCount}");
+                
+                TaskManagerSyncedWindow.OnDataChanged?.Invoke();
+                Debug.Log($"🏃 Client {senderId} manually left. Removed from registry.");
+            }
+        }
+
+        public static void CleanupTimedOutClients()
+        {
+            var taskData = UnityEngine.Resources.Load<TaskData>("TaskData");
+            if (taskData == null || taskData.ActiveClients.Count == 0) return;
+
+            bool changed = false;
+            DateTime now = DateTime.Now;
+
+            for (int i = 0; i < taskData.ActiveClients.Count; i++)
+            {
+                var client = taskData.ActiveClients[i];
+                if (client.SenderId == "editor") continue; // Never timeout host
+
+                if (DateTime.TryParse(client.LastSeen, out DateTime lastSeenTime))
+                {
+                    if ((now - lastSeenTime).TotalSeconds > 60) // 1 minute timeout
+                    {
+                        Debug.Log($"⏳ Client {client.Name} timed out. Removing.");
+                        taskData.ActiveClients.RemoveAt(i);
+                        i--;
+                        changed = true;
+                    }
+                }
+            }
+
+            if (changed)
+            {
+                EditorUtility.SetDirty(taskData);
+                AssetDatabase.SaveAssets();
+                BroadcastClientList(taskData);
+                
+                int listenerCount = TaskManagerSyncedWindow.OnDataChanged?.GetInvocationList().Length ?? 0;
+                Debug.Log($"[DEBUG] Timeout cleanup triggered UI Refresh. listeners: {listenerCount}");
+                
+                TaskManagerSyncedWindow.OnDataChanged?.Invoke();
             }
         }
     }

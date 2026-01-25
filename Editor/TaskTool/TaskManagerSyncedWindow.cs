@@ -26,13 +26,17 @@ namespace UnityProductivityTools.TaskTool.Editor
             _ui.Initialize();
             
             OnDataChanged += BroadcastTasks;
+            OnDataChanged += Repaint;
             WebSocketEditorListener.OnConnected += BroadcastTasks;
+            WebSocketEditorListener.OnConnected += Repaint;
         }
 
         private void OnDisable()
         {
             OnDataChanged -= BroadcastTasks;
+            OnDataChanged -= Repaint;
             WebSocketEditorListener.OnConnected -= BroadcastTasks;
+            WebSocketEditorListener.OnConnected -= Repaint;
         }
 
         private void BroadcastTasks()

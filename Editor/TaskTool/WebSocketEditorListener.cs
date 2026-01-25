@@ -31,7 +31,7 @@ namespace UnityProductivityTools.TaskTool.Editor
         static bool isConnecting = false;
 
         public static event Action OnConnected;
-
+        static double lastCleanupTime = 0;
         static WebSocketEditorListener()
         {
             Debug.Log("🧠 [WS] Editor WebSocket Listener Initialized");
@@ -56,6 +56,7 @@ namespace UnityProductivityTools.TaskTool.Editor
                     socket.Dispose();
                     socket = null;
                     connected = false;
+                    EditorCommandHandler.ClearPresence();
                     Debug.Log("✅ [WS] Disconnected.");
                 }
                 catch (Exception e)
@@ -117,10 +118,12 @@ namespace UnityProductivityTools.TaskTool.Editor
                     sender = "editor", 
                     type = "identity", 
                     payload = "Unity Editor Connected",
+                    platform = "Editor",
                     projectId = string.IsNullOrEmpty(CurrentProjectName) ? Application.productName : CurrentProjectName
                 });
 
                 OnConnected?.Invoke();
+                EditorCommandHandler.ClearPresence();
                 _ = ReceiveLoop();
             }
             catch (Exception e)
@@ -163,6 +166,7 @@ namespace UnityProductivityTools.TaskTool.Editor
             finally
             {
                 connected = false;
+                EditorCommandHandler.ClearPresence();
                 Debug.Log("🔌 [WS] Editor WebSocket DISCONNECTED");
             }
         }
@@ -180,6 +184,7 @@ namespace UnityProductivityTools.TaskTool.Editor
             {
                 msg.senderId = sessionId; // Attach our unique ID
                 msg.projectId = string.IsNullOrEmpty(CurrentProjectName) ? Application.productName : CurrentProjectName;
+                msg.platform = "Editor";
                 string json = JsonUtility.ToJson(msg);
                 byte[] data = Encoding.UTF8.GetBytes(json);
 
@@ -220,6 +225,13 @@ namespace UnityProductivityTools.TaskTool.Editor
                     Debug.LogWarning($"[WS] Failed to parse message: {e.Message}\nRaw: {msg}");
                 }
             }
+
+            // Periodic Cleanup of timed-out clients
+            if (EditorApplication.timeSinceStartup - lastCleanupTime > 10)
+            {
+                lastCleanupTime = EditorApplication.timeSinceStartup;
+                EditorCommandHandler.CleanupTimedOutClients();
+            }
         }
         static void LoadSettings()
         {
@@ -238,6 +250,8 @@ namespace UnityProductivityTools.TaskTool.Editor
                 }
             }
         }
+
     }
 }
+
 #endif

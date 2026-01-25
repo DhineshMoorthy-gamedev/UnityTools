@@ -14,22 +14,18 @@ namespace UnityProductivityTools.TaskTool.Editor
         private Vector2 _scrollPosition;
         private const string AssetPath = "Assets/Editor/Resources/TaskData.asset";
 
-        private TeamData _teamData;
-        private const string TeamAssetPath = "Assets/Editor/Resources/TeamData.asset";
         private bool _showTeamSettings = false;
 
         public void Initialize()
         {
             LoadTaskData();
-            LoadTeamData();
         }
 
         public void Draw()
         {
             if (_taskData == null) LoadTaskData();
-            if (_teamData == null) LoadTeamData();
 
-            if (_taskData == null || _teamData == null) return;
+            if (_taskData == null) return;
 
             // Toolbar
             EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
@@ -47,7 +43,6 @@ namespace UnityProductivityTools.TaskTool.Editor
             if (GUILayout.Button("Refresh", EditorStyles.toolbarButton))
             {
                 LoadTaskData();
-                LoadTeamData();
             }
             EditorGUILayout.EndHorizontal();
 
@@ -109,75 +104,19 @@ namespace UnityProductivityTools.TaskTool.Editor
             }
 
             AssetDatabase.CreateAsset(_taskData, AssetPath);
+            
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
         }
 
-        private void LoadTeamData()
-        {
-            _teamData = Resources.Load<TeamData>("TeamData");
-            if (_teamData == null)
-            {
-                string[] guids = AssetDatabase.FindAssets("t:TeamData");
-                if (guids.Length > 0)
-                {
-                    string path = AssetDatabase.GUIDToAssetPath(guids[0]);
-                    _teamData = AssetDatabase.LoadAssetAtPath<TeamData>(path);
-                }
-            }
-
-            if (_teamData == null)
-            {
-                CreateTeamData();
-            }
-        }
-
-        private void CreateTeamData()
-        {
-            _teamData = ScriptableObject.CreateInstance<TeamData>();
-            
-            // Ensure directory exists
-             string directory = Path.GetDirectoryName(TeamAssetPath);
-            if (!Directory.Exists(directory)) Directory.CreateDirectory(directory);
-
-            AssetDatabase.CreateAsset(_teamData, TeamAssetPath);
-            AssetDatabase.SaveAssets();
-            
-            // Auto-migrate existing users
-            if (_taskData != null)
-            {
-                foreach (var task in _taskData.Tasks)
-                {
-                    AddMemberIfNotExists(task.Assigner);
-                    AddMemberIfNotExists(task.Assignee);
-                }
-            }
-            EditorUtility.SetDirty(_teamData);
-            AssetDatabase.SaveAssets();
-        }
-
         private void AddMemberIfNotExists(string name)
         {
-            if (string.IsNullOrWhiteSpace(name)) return;
-            if (!_teamData.Members.Contains(name))
-            {
-                _teamData.Members.Add(name);
-            }
+            // Logic removed as Members list is gone
         }
 
         private void DrawTeamSettings()
         {
-             EditorGUILayout.HelpBox("Manage Team Members (populates dropdowns)", MessageType.Info);
-             
-             SerializedObject so = new SerializedObject(_teamData);
-             SerializedProperty membersProp = so.FindProperty("Members");
-             
-             EditorGUILayout.PropertyField(membersProp, true); // Use default list UI
-             
-             if (so.ApplyModifiedProperties())
-             {
-                 EditorUtility.SetDirty(_teamData);
-             }
+             EditorGUILayout.HelpBox("Team settings are now managed via the Synced Task Manager.", MessageType.Info);
         }
 
         private void GuiLine( int i_height = 1 )
@@ -237,25 +176,10 @@ namespace UnityProductivityTools.TaskTool.Editor
                 task.Priority = (TaskPriority)EditorGUILayout.EnumPopup("Priority", task.Priority);
                 EditorGUILayout.EndHorizontal();
 
-                // TEAM MEMBER DROPDOWNS
-                string[] options = _teamData.Members.ToArray();
-                
+                // TEAM MEMBER FIELDS (Non-synced version uses text fields now)
                 EditorGUILayout.BeginHorizontal();
-                
-                // Assigner
-                int assignerIndex = -1;
-                if (!string.IsNullOrEmpty(task.Assigner)) assignerIndex = System.Array.IndexOf(options, task.Assigner);
-                
-                int newAssignerIndex = EditorGUILayout.Popup("Assigner", assignerIndex, options);
-                if (newAssignerIndex >= 0 && newAssignerIndex < options.Length) task.Assigner = options[newAssignerIndex];
-                
-                // Assignee
-                int assigneeIndex = -1;
-                if (!string.IsNullOrEmpty(task.Assignee)) assigneeIndex = System.Array.IndexOf(options, task.Assignee);
-                
-                int newAssigneeIndex = EditorGUILayout.Popup("Assignee", assigneeIndex, options);
-                if (newAssigneeIndex >= 0 && newAssigneeIndex < options.Length) task.Assignee = options[newAssigneeIndex];
-
+                task.Assigner = EditorGUILayout.TextField("Assigner", task.Assigner);
+                task.Assignee = EditorGUILayout.TextField("Assignee", task.Assignee);
                 EditorGUILayout.EndHorizontal();
 
                 EditorGUILayout.LabelField("Description");
