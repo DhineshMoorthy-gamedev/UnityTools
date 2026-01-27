@@ -35,25 +35,31 @@ A comprehensive collection of Unity Editor tools designed to enhance productivit
     - **Navigation**: Click on any item to open the file directly in your IDE at the correct line.
 
 ### 🏗️ Scene & Hierarchy
-- **2.1 Add Scene to Build**: Quickly add the current scene to the Build Settings. (Right-click on Scene Asset > Add to Build Settings)
+- **2.1 Global Object Pinning**:
+    - **Anywhere Pinning**: Pin any GameObject from the Hierarchy or Asset from the Project window.
+    - **Instant Access**: Persistent icons in the toolbar for one-click selection and pinging.
+    - **Interaction**: Left-click to select; Right-click to unpin instantly.
+    - **Context Menu**: Right-click > Pin to Toolbar.
 
-- **2.2 Hierarchy Icons**: 
+- **2.2 Add Scene to Build**: Quickly add the current scene to the Build Settings. (Right-click on Scene Asset > Add to Build Settings)
+
+- **2.3 Hierarchy Icons**: 
     - **Visual Indicators**: Indicators in the Hierarchy view for better object identification.
     - **Dependency Indicators**: Visual cues for object dependencies within the project.
 
-- **2.3 Object Comparison Tool**:
+- **2.4 Object Comparison Tool**:
     - **Deep Comparison**: Compare two GameObjects, their Transforms, Components, and Hierarchy.
     - **Interactive Syncing**: Selectively apply changes between objects with one-click syncing (A → B or B → A).
     - **Visual History**: Track all changes made during a session with a built-in audit trail.
     - **Deferred Processing**: High stability IMGUI implementation prevents layout errors and flickering.
 
-- **2.4 Object Grouper**:
+- **2.5 Object Grouper**:
     - **Non-Destructive Grouping**: Organize objects into logical groups without changing the Hierarchy.
     - **Visual Indicators**: Colored dots in Hierarchy for grouped objects.
     - **Bulk Operations**: Toggle visibility, lock state, and selection for entire groups.
     - **Drag & Drop**: Easily add objects to groups via drag and drop.
 
-- **2.5 Snapshot Manager**: 
+- **2.6 Snapshot Manager**: 
     - **Capture**: specific states of GameObjects.
     - **Restore**: Revert objects to saved states.
     - **Undo Support**: Full undo/redo for all state restorations.
@@ -103,6 +109,7 @@ Enhanced toolbar with quick access to common operations:
 - **Platform Switcher**: Quickly switch build targets (Windows, Android, iOS, WebGL) via a dropdown menu.
 - **Scene Switcher**: Fast switching between scenes listed in your Build Settings.
 - **Find Scene**: Locate the currently active scene asset in the Project view (`🔍`).
+- **Object Pinning**: A dedicated area for your pinned GameObjects and Assets, maintaining a stable layout.
 
 
 

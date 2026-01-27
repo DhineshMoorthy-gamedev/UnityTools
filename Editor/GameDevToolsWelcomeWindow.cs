@@ -68,6 +68,12 @@ namespace UnityProductivityTools
                     "Automatically scans your C# scripts for //TODO and //FIXME comments. Click to jump to the exact line.",
                     "Tools/GameDevTools/TODO Scanner"
                 );
+
+                DrawToolItem(
+                    "1.6 Toolbar Extender",
+                    "Adds navigation buttons, project settings, preferences, and quick platform switching to the main Unity toolbar.",
+                    null // Always visible
+                );
                 
                 EditorGUI.indentLevel--;
                 EditorGUILayout.Space();
@@ -80,31 +86,37 @@ namespace UnityProductivityTools
                 EditorGUI.indentLevel++;
 
                 DrawToolItem(
-                    "2.1 Add Scene to Build", 
+                    "2.1 Global Object Pinning",
+                    "Pin any GameObject or Asset to the toolbar for instant access. Right-click any object in Hierarchy/Project and select 'Pin to Toolbar'.",
+                    null // Added via context menu
+                );
+
+                DrawToolItem(
+                    "2.2 Add Scene to Build", 
                     "Quickly add the selected scene asset to the Build Settings. (Right-click on Scene Asset in Project window > Add to Build Settings)",
                     null // Context Menu
                 );
 
                 DrawToolItem(
-                    "2.2 Hierarchy Icons", 
+                    "2.3 Hierarchy Icons", 
                     "Auto-displays icons in the Hierarchy view for GameObjects with specific components.",
                     null // Passive
                 );
 
                 DrawToolItem(
-                    "2.3 Object Comparison", 
+                    "2.4 Object Comparison", 
                     "Deeply compare two GameObjects, their components, and hierarchy. Includes interactive syncing and history tracking.",
                     "Tools/GameDevTools/Object Comparison"
                 );
 
                 DrawToolItem(
-                    "2.4 Object Grouper",
+                    "2.5 Object Grouper",
                     "Organize objects into logical groups without modifying the Hierarchy. Supports bulk visibility, locking, and selection.",
                     "Tools/GameDevTools/Object Grouper"
                 );
 
                 DrawToolItem(
-                    "2.5 Snapshot Manager", 
+                    "2.6 Snapshot Manager", 
                     "Capture, View, and Restore GameObject states (Transforms & Component values). Includes undo support.",
                     "Tools/GameDevTools/Snapshot Manager"
                 );
