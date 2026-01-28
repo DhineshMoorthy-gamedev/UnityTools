@@ -10,7 +10,7 @@ namespace UnityProductivityTools.AdvancedInspector
         private GameObject[] selectedObjects;
         private List<string> commonComponentTypes = new List<string>();
         private string selectedType;
-        private Editor bulkEditor;
+        private UnityEditor.Editor bulkEditor;
         private Vector2 scrollPos;
 
         public static void ShowWindow(GameObject[] objects)
@@ -113,7 +113,7 @@ namespace UnityProductivityTools.AdvancedInspector
 
             if (components.Length > 0)
             {
-                bulkEditor = Editor.CreateEditor(components);
+                bulkEditor = UnityEditor.Editor.CreateEditor(components);
             }
         }
 

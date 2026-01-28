@@ -14,18 +14,22 @@ namespace Dhinesh.EditorTools.CustomTaskbar
         static CustomToolbarButtons()
         {
             ToolbarExtender.LeftToolbarGUI.Clear();
-            ToolbarExtender.LeftToolbarGUI.Add(DrawSelectionBackButton);
-            ToolbarExtender.LeftToolbarGUI.Add(DrawSelectionForwardButton);
+            // ToolbarExtender.LeftToolbarGUI.Add(DrawSelectionBackButton);
+            // ToolbarExtender.LeftToolbarGUI.Add(DrawSelectionForwardButton);
             ToolbarExtender.LeftToolbarGUI.Add(() => GUILayout.Space(10));
             ToolbarExtender.LeftToolbarGUI.Add(DrawProjectSettingsButton);
             ToolbarExtender.LeftToolbarGUI.Add(() => GUILayout.Space(10));
             ToolbarExtender.LeftToolbarGUI.Add(DrawPrefsButton);
+            ToolbarExtender.LeftToolbarGUI.Add(() => GUILayout.Space(10));
             ToolbarExtender.LeftToolbarGUI.Add(DrawTestButton);
 
             ToolbarExtender.RightToolbarGUI.Clear();
             // IMPORTANT: Static buttons first to keep them anchored left
             ToolbarExtender.RightToolbarGUI.Add(DrawReloadButton);
             ToolbarExtender.RightToolbarGUI.Add(DrawFindSceneButton);
+            ToolbarExtender.LeftToolbarGUI.Add(() => GUILayout.Space(10));
+            ToolbarExtender.RightToolbarGUI.Add(DrawSelectionBackButton);
+            ToolbarExtender.RightToolbarGUI.Add(DrawSelectionForwardButton);
             // Pinned items added to the same list so they follow the static buttons
             ToolbarExtender.RightToolbarGUI.Add(DrawPinnedItems);
         }

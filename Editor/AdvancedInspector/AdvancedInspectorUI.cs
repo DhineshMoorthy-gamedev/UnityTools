@@ -16,7 +16,7 @@ namespace UnityProductivityTools.AdvancedInspector
         private Vector2 scrollPos;
         private string searchString = "";
         private GameObject lastSelected;
-        private Editor[] componentEditors;
+        private UnityEditor.Editor[] componentEditors;
         private List<bool> foldouts = new List<bool>();
         
         // Advanced Features State
@@ -65,13 +65,13 @@ namespace UnityProductivityTools.AdvancedInspector
             if (lastSelected == null) return;
 
             Component[] components = lastSelected.GetComponents<Component>();
-            componentEditors = new Editor[components.Length];
+            componentEditors = new UnityEditor.Editor[components.Length];
             foldouts.Clear();
 
             for (int i = 0; i < components.Length; i++)
             {
                 if (components[i] == null) continue;
-                componentEditors[i] = Editor.CreateEditor(components[i]);
+                componentEditors[i] = UnityEditor.Editor.CreateEditor(components[i]);
                 
                 if (componentToExpand != null && components[i].GetType().FullName == componentToExpand)
                 {
